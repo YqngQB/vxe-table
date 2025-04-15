@@ -904,13 +904,26 @@ export const Cell = {
       Cell.renderHeaderTitle(params).concat(Cell.renderSortIcon(params))
     )
   },
+
   renderSortIcon (params: (VxeTableDefines.CellRenderHeaderParams | VxeTableDefines.CellRenderHeaderParams) & { $table: VxeTableConstructor & VxeTablePrivateMethods }) {
     const { $table, column } = params
     const { computeSortOpts } = $table.getComputeMaps()
     const sortOpts = computeSortOpts.value
-    const { showIcon, allowBtn, ascTitle, descTitle, iconLayout, iconAsc, iconDesc, iconVisibleMethod } = sortOpts
+    const { showIcon, allowBtn, ascTitle, descTitle, iconLayout, iconAsc, iconDesc, multiple, chronological, iconVisibleMethod } = sortOpts
     const { order } = column
     if (showIcon && (!iconVisibleMethod || iconVisibleMethod(params))) {
+      // 根据 sortTime 获取排序列索引
+      const sortList = $table.getSortColumns()
+      const sortIndex = sortList.findIndex((col) => col.field === column.field)
+      const renderSortIndex = () => {
+        if (column.sortTime && multiple && chronological && !!order) {
+          return h('span', {
+            class: 'vxe-cell--sort-index'
+          }, sortIndex > -1 ? `${sortIndex + 1}` : '')
+        } else {
+          return undefined
+        }
+      }
       return [
         h('span', {
           class: ['vxe-cell--sort', `vxe-cell--sort-${iconLayout}-layout`]
@@ -939,7 +952,8 @@ export const Cell = {
                 }
               : undefined
           })
-        ])
+        ]),
+        renderSortIndex()
       ]
     }
     return []

@@ -10,6 +10,10 @@
       :row-config="{isHover: true}"
       :loading="demo1.loading"
       :checkbox-config="{labelField: 'id', highlight: true, range: true}"
+      :sort-config="{
+        multiple: true,
+        chronological:true
+      }"
       :menu-config="menuConfig"
       :data="demo1.tableData"
       :footer-data="demo1.footerData">
@@ -24,7 +28,7 @@
         :title-prefix="{content: 'sdf', icon: 'vxe-icon-edit'}"
         :title-suffix="{content: 'sdf', icon: 'vxe-icon-edit'}">
       </vxe-column>
-      <vxe-column field="name" title="Name Name Name Name Name" min-width="auto"></vxe-column>
+      <vxe-column field="name" title="Name Name Name Name Name" min-width="auto" sortable></vxe-column>
       <vxe-column field="age" title="Age" min-width="auto"></vxe-column>
       <vxe-column field="sex" title="Sex" min-width="auto">
         <template #default="{ row }">
