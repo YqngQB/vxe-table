@@ -904,7 +904,6 @@ export const Cell = {
       Cell.renderHeaderTitle(params).concat(Cell.renderSortIcon(params))
     )
   },
-
   renderSortIcon (params: (VxeTableDefines.CellRenderHeaderParams | VxeTableDefines.CellRenderHeaderParams) & { $table: VxeTableConstructor & VxeTablePrivateMethods }) {
     const { $table, column } = params
     const { computeSortOpts } = $table.getComputeMaps()
@@ -921,7 +920,7 @@ export const Cell = {
             class: 'vxe-cell--sort-index'
           }, sortIndex > -1 ? `${sortIndex + 1}` : '')
         } else {
-          return undefined
+          return renderEmptyElement($table)
         }
       }
       return [
