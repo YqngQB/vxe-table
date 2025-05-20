@@ -7,7 +7,7 @@ import { hasClass } from '../../../ui/src/dom'
 import { createHtmlPage, getExportBlobByContent } from './util'
 import { warnLog, errLog } from '../../../ui/src/log'
 
-import type { VxeGridConstructor, VxeGridPrivateMethods, VxeTablePropTypes, VxeColumnPropTypes, TableExportMethods, VxeGridPropTypes, VxeTableDefines } from '../../../../types'
+import type { VxeGridConstructor, VxeGridPrivateMethods, VxeTablePropTypes, VxeColumnPropTypes, TableExportMethods, VxeGridPropTypes, VxeTableDefines, VxeTableConstructor, VxeTablePrivateMethods } from '../../../../types'
 
 const { getI18n, hooks, renderer } = VxeUI
 
@@ -16,8 +16,8 @@ let htmlCellElem: any
 const csvBOM = '\ufeff'
 const enterSymbol = '\r\n'
 
-function defaultFilterExportColumn (column: any) {
-  return column.field || ['seq', 'checkbox', 'radio'].indexOf(column.type) > -1
+function defaultFilterExportColumn (column: VxeTableDefines.ColumnInfo) {
+  return !!column.field || ['seq', 'checkbox', 'radio'].indexOf(column.type || '') === -1
 }
 
 const getConvertColumns = (columns: any) => {
@@ -78,7 +78,7 @@ const convertToRows = (originColumns: any): any[][] => {
   return rows
 }
 
-function toTableBorder (border: any) {
+function toTableBorder (border: VxeTablePropTypes.Border | undefined) {
   if (border === true) {
     return 'full'
   }
@@ -92,9 +92,9 @@ function getBooleanValue (cellValue: any) {
   return cellValue === 'TRUE' || cellValue === 'true' || cellValue === true
 }
 
-function getFooterData (opts: VxeTablePropTypes.ExportHandleOptions, footerTableData: any[]) {
+function getFooterData ($xeTable: VxeTableConstructor & VxeTablePrivateMethods, opts: VxeTablePropTypes.ExportHandleOptions, footerTableData: any[]) {
   const { footerFilterMethod } = opts
-  return footerFilterMethod ? footerTableData.filter((items, index) => footerFilterMethod({ items, $rowIndex: index })) : footerTableData
+  return footerFilterMethod ? footerTableData.filter((items, index) => footerFilterMethod({ $table: $xeTable, items, $rowIndex: index })) : footerTableData
 }
 
 function getCsvCellTypeLabel (column: any, cellValue: any) {
@@ -309,11 +309,12 @@ hooks.add('tableExportModule', {
       return row[childrenField] && row[childrenField].length
     }
 
-    const getSeq = (cellValue: any, row: any, $rowIndex: any, column: any, $columnIndex: any) => {
+    const getSeq = (cellValue: any, row: any, $rowIndex: number, column: VxeTableDefines.ColumnInfo, $columnIndex: number) => {
       const seqOpts = computeSeqOpts.value
-      const seqMethod = seqOpts.seqMethod || column.seqMethod
+      const seqMethod = seqOpts.seqMethod || (column as any).seqMethod
       if (seqMethod) {
         return seqMethod({
+          $table: $xeTable,
           row,
           rowIndex: $xeTable.getRowIndex(row),
           $rowIndex,
@@ -325,7 +326,7 @@ hooks.add('tableExportModule', {
       return cellValue
     }
 
-    function getHeaderTitle (opts: any, column: any) {
+    function getHeaderTitle (opts: VxeTablePropTypes.ExportHandleOptions, column: VxeTableDefines.ColumnInfo) {
       const columnOpts = computeColumnOpts.value
       const headExportMethod = column.headerExportMethod || columnOpts.headerExportMethod
       return headExportMethod ? headExportMethod({ column, options: opts, $table: $xeTable }) : ((opts.isTitle ? column.getTitle() : column.field) || '')
@@ -390,12 +391,12 @@ hooks.add('tableExportModule', {
                   case 'checkbox':
                     cellValue = toBooleanValue($xeTable.isCheckedByCheckboxRow(row))
                     item._checkboxLabel = checkboxOpts.labelField ? XEUtils.get(row, checkboxOpts.labelField) : ''
-                    item._checkboxDisabled = checkboxOpts.checkMethod && !checkboxOpts.checkMethod({ row })
+                    item._checkboxDisabled = checkboxOpts.checkMethod && !checkboxOpts.checkMethod({ $table: $xeTable, row })
                     break
                   case 'radio':
                     cellValue = toBooleanValue($xeTable.isCheckedByRadioRow(row))
                     item._radioLabel = radioOpts.labelField ? XEUtils.get(row, radioOpts.labelField) : ''
-                    item._radioDisabled = radioOpts.checkMethod && !radioOpts.checkMethod({ row })
+                    item._radioDisabled = radioOpts.checkMethod && !radioOpts.checkMethod({ $table: $xeTable, row })
                     break
                   default:
                     if (opts.original) {
@@ -448,12 +449,12 @@ hooks.add('tableExportModule', {
               case 'checkbox':
                 cellValue = toBooleanValue($xeTable.isCheckedByCheckboxRow(row))
                 item._checkboxLabel = checkboxOpts.labelField ? XEUtils.get(row, checkboxOpts.labelField) : ''
-                item._checkboxDisabled = checkboxOpts.checkMethod && !checkboxOpts.checkMethod({ row })
+                item._checkboxDisabled = checkboxOpts.checkMethod && !checkboxOpts.checkMethod({ $table: $xeTable, row })
                 break
               case 'radio':
                 cellValue = toBooleanValue($xeTable.isCheckedByRadioRow(row))
                 item._radioLabel = radioOpts.labelField ? XEUtils.get(row, radioOpts.labelField) : ''
-                item._radioDisabled = radioOpts.checkMethod && !radioOpts.checkMethod({ row })
+                item._radioDisabled = radioOpts.checkMethod && !radioOpts.checkMethod({ $table: $xeTable, row })
                 break
               default:
                 if (opts.original) {
@@ -478,19 +479,19 @@ hooks.add('tableExportModule', {
       })
     }
 
-    const getExportData = (opts: any) => {
+    const getExportData = (opts: VxeTablePropTypes.ExportHandleOptions) => {
       const { columns, dataFilterMethod } = opts
       let datas = opts.data
       if (dataFilterMethod) {
-        datas = datas.filter((row: any, index: any) => dataFilterMethod({ row, $rowIndex: index }))
+        datas = datas.filter((row, index) => dataFilterMethod({ $table: $xeTable, row, $rowIndex: index }))
       }
       return getBodyLabelData(opts, columns, datas)
     }
 
-    const getFooterCellValue = (opts: any, row: any, column: any) => {
+    const getFooterCellValue = (opts: VxeTablePropTypes.ExportHandleOptions, row: any, column: VxeTableDefines.ColumnInfo) => {
       const columnOpts = computeColumnOpts.value
       const renderOpts = column.editRender || column.cellRender
-      let footLabelMethod = column.footerExportMethod
+      let footLabelMethod: VxeColumnPropTypes.FooterExportMethod | undefined = column.footerExportMethod
       if (!footLabelMethod && renderOpts && renderOpts.name) {
         const compConf = renderer.get(renderOpts.name)
         if (compConf) {
@@ -511,7 +512,7 @@ hooks.add('tableExportModule', {
       return XEUtils.get(row, column.field)
     }
 
-    const toCsv = (opts: VxeTablePropTypes.ExportHandleOptions, columns: VxeTableDefines.ColumnInfo[], datas: any[]) => {
+    const toCsv = ($xeTable: VxeTableConstructor & VxeTablePrivateMethods, opts: VxeTablePropTypes.ExportHandleOptions, columns: VxeTableDefines.ColumnInfo[], datas: any[]) => {
       let content = csvBOM
       if (opts.isHeader) {
         content += columns.map((column) => toTxtCellLabel(getHeaderTitle(opts, column))).join(',') + enterSymbol
@@ -521,7 +522,7 @@ hooks.add('tableExportModule', {
       })
       if (opts.isFooter) {
         const { footerTableData } = reactData
-        const footers = getFooterData(opts, footerTableData)
+        const footers = getFooterData($xeTable, opts, footerTableData)
         footers.forEach((row) => {
           content += columns.map((column: any) => toTxtCellLabel(getFooterCellValue(opts, row, column))).join(',') + enterSymbol
         })
@@ -529,7 +530,7 @@ hooks.add('tableExportModule', {
       return content
     }
 
-    const toTxt = (opts: VxeTablePropTypes.ExportHandleOptions, columns: VxeTableDefines.ColumnInfo[], datas: any[]) => {
+    const toTxt = ($xeTable: VxeTableConstructor & VxeTablePrivateMethods, opts: VxeTablePropTypes.ExportHandleOptions, columns: VxeTableDefines.ColumnInfo[], datas: any[]) => {
       let content = ''
       if (opts.isHeader) {
         content += columns.map((column) => toTxtCellLabel(getHeaderTitle(opts, column))).join('\t') + enterSymbol
@@ -539,7 +540,7 @@ hooks.add('tableExportModule', {
       })
       if (opts.isFooter) {
         const { footerTableData } = reactData
-        const footers = getFooterData(opts, footerTableData)
+        const footers = getFooterData($xeTable, opts, footerTableData)
         footers.forEach((row) => {
           content += columns.map((column: any) => toTxtCellLabel(getFooterCellValue(opts, row, column))).join('\t') + enterSymbol
         })
@@ -703,7 +704,7 @@ hooks.add('tableExportModule', {
       }
       if (isFooter) {
         const { footerTableData } = reactData
-        const footers = getFooterData(opts, footerTableData)
+        const footers = getFooterData($xeTable, opts, footerTableData)
         if (footers.length) {
           tables.push('<tfoot>')
           footers.forEach((row: any) => {
@@ -756,7 +757,7 @@ hooks.add('tableExportModule', {
       })
       if (opts.isFooter) {
         const { footerTableData } = reactData
-        const footers = getFooterData(opts, footerTableData)
+        const footers = getFooterData($xeTable, opts, footerTableData)
         footers.forEach((row: any) => {
           xml += `<Row>${columns.map((column: any) => `<Cell><Data ss:Type="String">${getFooterCellValue(opts, row, column)}</Data></Cell>`).join('')}</Row>`
         })
@@ -764,13 +765,13 @@ hooks.add('tableExportModule', {
       return `${xml}</Table></Worksheet></Workbook>`
     }
 
-    const getContent = (opts: VxeTablePropTypes.ExportHandleOptions, columns: VxeTableDefines.ColumnInfo[], datas: any[]) => {
+    const getContent = ($xeTable: VxeTableConstructor & VxeTablePrivateMethods, opts: VxeTablePropTypes.ExportHandleOptions, columns: VxeTableDefines.ColumnInfo[], datas: any[]) => {
       if (columns.length) {
         switch (opts.type) {
           case 'csv':
-            return toCsv(opts, columns, datas)
+            return toCsv($xeTable, opts, columns, datas)
           case 'txt':
-            return toTxt(opts, columns, datas)
+            return toTxt($xeTable, opts, columns, datas)
           case 'html':
             return toHtml(opts, columns, datas)
           case 'xml':
@@ -807,7 +808,7 @@ hooks.add('tableExportModule', {
           const datas = getExportData(opts)
           resolve(
             $xeTable.preventEvent(null, 'event.export', { options: opts, columns, colgroups, datas }, () => {
-              return downloadFile(opts, getContent(opts, columns, datas))
+              return downloadFile(opts, getContent($xeTable, opts, columns, datas))
             })
           )
         }
@@ -1011,7 +1012,7 @@ hooks.add('tableExportModule', {
         }
         return false
       }
-      return exportOpts.original ? column.field : defaultFilterExportColumn(column)
+      return exportOpts.original ? !!column.field : defaultFilterExportColumn(column)
     }
 
     const handleExportAndPrint = (options: VxeTablePropTypes.ExportOpts | VxeTablePropTypes.ExportConfig, isPrint?: boolean) => {
@@ -1062,7 +1063,7 @@ hooks.add('tableExportModule', {
       })
       // 默认选中
       XEUtils.eachTree(exportColumns, (column, index, items, path, parent) => {
-        const isColGroup = column.children && column.children.length
+        const isColGroup = column.children && column.children.length > 0
         let isChecked = false
         if (columns && columns.length) {
           isChecked = handleFilterColumns(defOpts, column, columns)
@@ -1073,7 +1074,7 @@ hooks.add('tableExportModule', {
         }
         column.checked = isChecked
         column.halfChecked = false
-        column.disabled = (parent && parent.disabled) || (checkMethod ? !checkMethod({ column }) : false)
+        column.disabled = (parent && parent.disabled) || (checkMethod ? !checkMethod({ $table: $xeTable, column }) : false)
       })
       // 更新条件
       Object.assign(exportStore, {
@@ -1177,10 +1178,14 @@ hooks.add('tableExportModule', {
         if (!mode) {
           mode = selectRecords.length ? 'selected' : 'current'
         }
-        const customCols = columns && columns.length
-          ? columns
-          : XEUtils.searchTree(collectColumn, column => {
-            const isColGroup = column.children && column.children.length
+        let isCustomCol = false
+        let customCols = []
+        if (columns && columns.length) {
+          isCustomCol = true
+          customCols = columns
+        } else {
+          customCols = XEUtils.searchTree(collectColumn, column => {
+            const isColGroup = column.children && column.children.length > 0
             let isChecked = false
             if (columns && columns.length) {
               isChecked = handleFilterColumns(opts, column, columns)
@@ -1191,10 +1196,11 @@ hooks.add('tableExportModule', {
             }
             return isChecked
           }, { children: 'children', mapChildren: 'childNodes', original: true })
+        }
         const handleOptions: VxeTablePropTypes.ExportHandleOptions = Object.assign({ } as { data: any[], colgroups: any[], columns: any[] }, opts, { filename: '', sheetName: '' })
         // 如果设置源数据，则默认导出设置了字段的列
-        if (!customCols && !columnFilterMethod) {
-          handleOptions.columnFilterMethod = ({ column }) => {
+        if (!isCustomCol && !columnFilterMethod) {
+          columnFilterMethod = ({ column }) => {
             if (excludeFields) {
               if (XEUtils.includes(excludeFields, column.field)) {
                 return false
@@ -1206,8 +1212,9 @@ hooks.add('tableExportModule', {
               }
               return false
             }
-            return original ? column.field : defaultFilterExportColumn(column)
+            return original ? !!column.field : defaultFilterExportColumn(column)
           }
+          handleOptions.columnFilterMethod = columnFilterMethod
         }
         if (customCols) {
           handleOptions._isCustomColumn = true
@@ -1239,7 +1246,7 @@ hooks.add('tableExportModule', {
               children: 'childNodes',
               mapChildren: '_children'
             }),
-            (column, index) => isColumnInfo(column) && (!columnFilterMethod || columnFilterMethod({ column: column as any, $columnIndex: index })),
+            (column, index) => isColumnInfo(column) && (!columnFilterMethod || columnFilterMethod({ $table: $xeTable, column: column as any, $columnIndex: index })),
             {
               children: '_children',
               mapChildren: 'childNodes',
@@ -1247,7 +1254,7 @@ hooks.add('tableExportModule', {
             }
           )
         } else {
-          groups = XEUtils.searchTree(isGroup ? collectColumn : tableFullColumn, (column, index) => column.visible && (!columnFilterMethod || columnFilterMethod({ column, $columnIndex: index })), { children: 'children', mapChildren: 'childNodes', original: true })
+          groups = XEUtils.searchTree(isGroup ? collectColumn : tableFullColumn, (column, index) => column.visible && (!columnFilterMethod || columnFilterMethod({ $table: $xeTable, column, $columnIndex: index })), { children: 'children', mapChildren: 'childNodes', original: true })
         }
         // 获取所有列
         const cols: VxeTableDefines.ColumnInfo[] = []
@@ -1293,10 +1300,8 @@ hooks.add('tableExportModule', {
         // 检查类型，如果为自定义导出，则不需要校验类型
         if (!handleOptions.exportMethod && !XEUtils.includes(XEUtils.keys(exportOpts._typeMaps), type)) {
           errLog('vxe.error.notType', [type])
-          if (process.env.VUE_APP_VXE_ENV === 'development') {
-            if (['xlsx', 'pdf'].includes(type)) {
-              warnLog('vxe.error.reqPlugin', [4, 'plugin-export-xlsx'])
-            }
+          if (['xlsx', 'pdf'].includes(type)) {
+            warnLog('vxe.error.reqPlugin', [4, 'plugin-export-xlsx'])
           }
           const params = { status: false }
           return Promise.reject(params)
@@ -1316,10 +1321,8 @@ hooks.add('tableExportModule', {
               handleOptions.data = selectRecords
             }
           } else if (mode === 'all') {
-            if (process.env.VUE_APP_VXE_ENV === 'development') {
-              if (!$xeGrid) {
-                warnLog('vxe.error.errProp', ['all', 'mode=current,selected'])
-              }
+            if (!$xeGrid) {
+              errLog('vxe.error.errProp', ['all', 'mode=current,selected'])
             }
 
             if ($xeGrid && !handleOptions.remote) {
@@ -1333,10 +1336,8 @@ hooks.add('tableExportModule', {
               const queryAllSuccessMethods = ajax.queryAllSuccess
               const queryAllErrorMethods = ajax.queryAllError
 
-              if (process.env.VUE_APP_VXE_ENV === 'development') {
-                if (!ajaxMethods) {
-                  warnLog('vxe.error.notFunc', ['proxy-config.ajax.queryAll'])
-                }
+              if (!ajaxMethods) {
+                errLog('vxe.error.notFunc', ['proxy-config.ajax.queryAll'])
               }
 
               if (ajaxMethods) {
@@ -1577,7 +1578,7 @@ hooks.add('tableExportModule', {
         if (!props.exportConfig) {
           errLog('vxe.error.reqProp', ['export-config'])
         }
-        handleExportAndPrint(defOpts)
+        return handleExportAndPrint(defOpts)
       },
       closePrint: handleCloseExport,
       openPrint (options) {
@@ -1588,7 +1589,7 @@ hooks.add('tableExportModule', {
         if (!props.printConfig) {
           errLog('vxe.error.reqProp', ['print-config'])
         }
-        handleExportAndPrint(defOpts, true)
+        return handleExportAndPrint(defOpts, true)
       }
     }
 

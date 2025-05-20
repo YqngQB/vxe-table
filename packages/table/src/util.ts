@@ -1,7 +1,7 @@
-import { watch, reactive } from 'vue'
+import { watch, reactive, nextTick } from 'vue'
 import XEUtils from 'xe-utils'
 import { ColumnInfo } from './columnInfo'
-import { isPx, isScale } from '../../ui/src/dom'
+import { isPx, isScale, queryElement } from '../../ui/src/dom'
 import { eqEmptyValue } from '../../ui/src/utils'
 
 import type { VxeTableConstructor, VxeTablePrivateMethods, VxeTableDefines } from '../../../types'
@@ -72,23 +72,18 @@ export const convertHeaderColumnToRows = (originColumns: any): any[][] => {
 export function restoreScrollLocation ($xeTable: VxeTableConstructor, scrollLeft: number, scrollTop: number) {
   const internalData = $xeTable.internalData
 
-  return $xeTable.clearScroll().then(() => {
-    if (scrollLeft || scrollTop) {
-      // 重置最后滚动状态
-      internalData.lastScrollLeft = 0
-      internalData.lastScrollTop = 0
-
-      internalData.intoRunScroll = false
-      internalData.inVirtualScroll = false
-      internalData.inWheelScroll = false
-      internalData.inHeaderScroll = false
-      internalData.inBodyScroll = false
-      internalData.inFooterScroll = false
-      internalData.scrollRenderType = ''
-      // 还原滚动状态
-      return $xeTable.scrollTo(scrollLeft, scrollTop)
-    }
-  })
+  if (scrollLeft || scrollTop) {
+    internalData.intoRunScroll = false
+    internalData.inVirtualScroll = false
+    internalData.inWheelScroll = false
+    internalData.inHeaderScroll = false
+    internalData.inBodyScroll = false
+    internalData.inFooterScroll = false
+    internalData.scrollRenderType = ''
+    // 还原滚动状态
+    return $xeTable.scrollTo(scrollLeft, scrollTop)
+  }
+  return nextTick()
 }
 
 /**
@@ -98,40 +93,43 @@ export function getRowUniqueId () {
   return XEUtils.uniqueId('row_')
 }
 
+export function hasDeepKey (rowKey: string) {
+  return rowKey.indexOf('.') > -1
+}
+
 // 行主键 key
 export function getRowkey ($xeTable: VxeTableConstructor) {
-  const { props } = $xeTable
-  const { computeRowOpts } = $xeTable.getComputeMaps()
-  const rowOpts = computeRowOpts.value
-  return `${props.rowId || rowOpts.keyField || '_X_ROW_KEY'}`
+  const { currKeyField } = $xeTable.internalData
+  return currKeyField
 }
 
 // 行主键 value
 export function getRowid ($xeTable: VxeTableConstructor, row: any) {
-  const rowid = XEUtils.get(row, getRowkey($xeTable))
-  return encodeRowid(rowid)
+  const internalData = $xeTable.internalData
+  const { isCurrDeepKey, currKeyField } = internalData
+  return row ? encodeRowid((isCurrDeepKey ? getDeepRowIdByKey : getFastRowIdByKey)(row, currKeyField)) : ''
 }
 
 export function createHandleUpdateRowId ($xeTable: VxeTableConstructor) {
-  const rowKey = getRowkey($xeTable)
-  const isDeepKey = rowKey.indexOf('.') > -1
-  const updateRId = isDeepKey ? updateDeepRowKey : updateFastRowKey
+  const internalData = $xeTable.internalData
+  const { isCurrDeepKey, currKeyField } = internalData
+  const updateRId = isCurrDeepKey ? updateDeepRowKey : updateFastRowKey
   return {
-    rowKey,
+    rowKey: currKeyField,
     handleUpdateRowId (row: any) {
-      return row ? updateRId(row, rowKey) : null
+      return row ? updateRId(row, currKeyField) : ''
     }
   }
 }
 
 export function createHandleGetRowId ($xeTable: VxeTableConstructor) {
-  const rowKey = getRowkey($xeTable)
-  const isDeepKey = rowKey.indexOf('.') > -1
-  const getRId = isDeepKey ? getDeepRowIdByKey : getFastRowIdByKey
+  const internalData = $xeTable.internalData
+  const { isCurrDeepKey, currKeyField } = internalData
+  const getRId = isCurrDeepKey ? getDeepRowIdByKey : getFastRowIdByKey
   return {
-    rowKey,
+    rowKey: currKeyField,
     handleGetRowId (row: any) {
-      return row ? getRId(row, rowKey) : null
+      return row ? encodeRowid(getRId(row, currKeyField)) : ''
     }
   }
 }
@@ -146,7 +144,7 @@ function getDeepRowIdByKey (row: any, rowKey: string) {
 }
 
 export function updateDeepRowKey (row: any, rowKey: string) {
-  let rowid = getDeepRowIdByKey(row, rowKey)
+  let rowid = encodeRowid(getDeepRowIdByKey(row, rowKey))
   if (eqEmptyValue(rowid)) {
     rowid = getRowUniqueId()
     XEUtils.set(row, rowKey, rowid)
@@ -159,7 +157,7 @@ function getFastRowIdByKey (row: any, rowKey: string) {
 }
 
 export function updateFastRowKey (row: any, rowKey: string) {
-  let rowid = getFastRowIdByKey(row, rowKey)
+  let rowid = encodeRowid(getFastRowIdByKey(row, rowKey))
   if (eqEmptyValue(rowid)) {
     rowid = getRowUniqueId()
     row[rowKey] = rowid
@@ -196,7 +194,7 @@ function getPaddingLeftRightSize (elem: HTMLElement | null) {
   return 0
 }
 
-function getElementMarginWidth (elem: HTMLElement | null) {
+function getElementMarginAndWidth (elem: HTMLElement | null) {
   if (elem) {
     const computedStyle = getComputedStyle(elem)
     const marginLeft = XEUtils.toNumber(computedStyle.marginLeft)
@@ -204,10 +202,6 @@ function getElementMarginWidth (elem: HTMLElement | null) {
     return elem.offsetWidth + marginLeft + marginRight
   }
   return 0
-}
-
-function queryCellElement (cell: HTMLTableCellElement, selector: string) {
-  return cell.querySelector('.vxe-cell' + selector) as HTMLElement | null
 }
 
 export function toFilters (filters: any) {
@@ -309,19 +303,19 @@ export function getColReMinWidth (params: {
   const showTitle = headOverflow === 'title'
   const showTooltip = headOverflow === true || headOverflow === 'tooltip'
   const hasEllipsis = showTitle || showTooltip || showEllipsis
-  const minTitleWidth = XEUtils.floor((XEUtils.toNumber(getComputedStyle(cell).fontSize) || 14) * 1.6)
-  const paddingLeftRight = getPaddingLeftRightSize(cell) + getPaddingLeftRightSize(queryCellElement(cell, ''))
+  const minTitleWidth = XEUtils.floor((XEUtils.toNumber(getComputedStyle(cell).fontSize) || 14) * 1.8)
+  const paddingLeftRight = getPaddingLeftRightSize(cell) + getPaddingLeftRightSize(queryElement(cell, '.vxe-cell'))
   let mWidth = minTitleWidth + paddingLeftRight
   // 默认最小宽处理
   if (hasEllipsis) {
-    const dragIconWidth = getPaddingLeftRightSize(queryCellElement(cell, '>.vxe-cell--drag-handle'))
-    const checkboxIconWidth = getPaddingLeftRightSize(queryCellElement(cell, '>.vxe-cell--checkbox'))
-    const requiredIconWidth = getElementMarginWidth(queryCellElement(cell, '>.vxe-cell--required-icon'))
-    const editIconWidth = getElementMarginWidth(queryCellElement(cell, '>.vxe-cell--edit-icon'))
-    const prefixIconWidth = getElementMarginWidth(queryCellElement(cell, '>.vxe-cell-title-prefix-icon'))
-    const suffixIconWidth = getElementMarginWidth(queryCellElement(cell, '>.vxe-cell-title-suffix-icon'))
-    const sortIconWidth = getElementMarginWidth(queryCellElement(cell, '>.vxe-cell--sort'))
-    const filterIconWidth = getElementMarginWidth(queryCellElement(cell, '>.vxe-cell--filter'))
+    const dragIconWidth = getElementMarginAndWidth(queryElement(cell, '.vxe-cell--drag-handle'))
+    const checkboxIconWidth = getElementMarginAndWidth(queryElement(cell, '.vxe-cell--checkbox'))
+    const requiredIconWidth = getElementMarginAndWidth(queryElement(cell, '.vxe-cell--required-icon'))
+    const editIconWidth = getElementMarginAndWidth(queryElement(cell, '.vxe-cell--edit-icon'))
+    const prefixIconWidth = getElementMarginAndWidth(queryElement(cell, '.vxe-cell-title-prefix-icon'))
+    const suffixIconWidth = getElementMarginAndWidth(queryElement(cell, '.vxe-cell-title-suffix-icon'))
+    const sortIconWidth = getElementMarginAndWidth(queryElement(cell, '.vxe-cell--sort'))
+    const filterIconWidth = getElementMarginAndWidth(queryElement(cell, '.vxe-cell--filter'))
     mWidth += dragIconWidth + checkboxIconWidth + requiredIconWidth + editIconWidth + prefixIconWidth + suffixIconWidth + filterIconWidth + sortIconWidth
   }
   // 如果设置最小宽
@@ -510,7 +504,7 @@ export function rowToVisible ($xeTable: VxeTableConstructor & VxeTablePrivateMet
 
   const { computeLeftFixedWidth, computeRightFixedWidth, computeRowOpts, computeCellOpts, computeDefaultRowHeight } = $xeTable.getComputeMaps()
   const { showOverflow } = tableProps
-  const { scrollYLoad } = reactData
+  const { scrollYLoad, scrollYTop } = reactData
   const { elemStore, afterFullData, fullAllDataRowIdData, isResizeCellHeight } = internalData
   const rowOpts = computeRowOpts.value
   const cellOpts = computeCellOpts.value
@@ -524,8 +518,7 @@ export function rowToVisible ($xeTable: VxeTableConstructor & VxeTablePrivateMet
     const bodyScrollTop = bodyScrollElem.scrollTop
     const trElem: HTMLTableRowElement | null = bodyScrollElem.querySelector(`[rowid="${rowid}"]`)
     if (trElem) {
-      const trOffsetParent = trElem.offsetParent as HTMLElement
-      const trOffsetTop = trElem.offsetTop + (trOffsetParent ? trOffsetParent.offsetTop : 0)
+      const trOffsetTop = trElem.offsetTop + (scrollYLoad ? scrollYTop : 0)
       const trHeight = trElem.clientHeight
       // 检测行是否在可视区中
       if (trOffsetTop < bodyScrollTop || trOffsetTop > bodyScrollTop + bodyHeight) {
@@ -567,7 +560,7 @@ export function colToVisible ($xeTable: VxeTableConstructor & VxeTablePrivateMet
   const internalData = $xeTable.internalData
 
   const { computeLeftFixedWidth, computeRightFixedWidth } = $xeTable.getComputeMaps()
-  const { scrollXLoad } = reactData
+  const { scrollXLoad, scrollXLeft } = reactData
   const { elemStore, visibleColumn } = internalData
   const leftFixedWidth = computeLeftFixedWidth.value
   const rightFixedWidth = computeRightFixedWidth.value
@@ -587,8 +580,7 @@ export function colToVisible ($xeTable: VxeTableConstructor & VxeTablePrivateMet
       tdElem = bodyScrollElem.querySelector(`.${column.id}`)
     }
     if (tdElem) {
-      const tdOffsetParent = tdElem.offsetParent as HTMLElement
-      const tdOffsetLeft = tdElem.offsetLeft + (tdOffsetParent ? tdOffsetParent.offsetLeft : 0)
+      const tdOffsetLeft = tdElem.offsetLeft + (scrollXLoad ? scrollXLeft : 0)
       const cellWidth = tdElem.clientWidth
       // 检测是否在可视区中
       if (tdOffsetLeft < (bodyScrollLeft + leftFixedWidth)) {

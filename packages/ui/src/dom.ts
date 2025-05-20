@@ -55,7 +55,7 @@ export function isScale (val: any) {
 }
 
 export function hasClass (elem: any, cls: any) {
-  return elem && elem.className && elem.className.match && elem.className.match(getClsRE(cls))
+  return !!(elem && elem.className && elem.className.match && elem.className.match(getClsRE(cls)))
 }
 
 export function removeClass (elem: any, cls: any) {
@@ -71,11 +71,22 @@ export function addClass (elem: any, cls: string) {
   }
 }
 
+export function hasControlKey (evnt: KeyboardEvent | MouseEvent | DragEvent) {
+  return evnt.ctrlKey || evnt.metaKey
+}
+
 export function toCssUnit (val?: number | string, unit = 'px') {
   if (XEUtils.isNumber(val) || /^\d+$/.test(`${val}`)) {
     return `${val}${unit}`
   }
   return `${val || ''}`
+}
+
+export function queryElement (elem: HTMLTableCellElement, selector: string) {
+  if (elem) {
+    return elem.querySelector<HTMLElement>(selector)
+  }
+  return null
 }
 
 export function getDomNode () {

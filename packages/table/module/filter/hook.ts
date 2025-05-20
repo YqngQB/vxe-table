@@ -52,6 +52,9 @@ hooks.add('tableFilterModule', {
       const { filterStore } = reactData
       $xeTable.handleClearFilter(filterStore.column)
       $xeTable.confirmFilterEvent(evnt)
+      if (evnt) {
+        $xeTable.dispatchEvent('clear-filter', { filterList: [] }, evnt)
+      }
     }
 
     const filterPrivateMethods: TableFilterPrivateMethods = {
@@ -272,6 +275,7 @@ hooks.add('tableFilterModule', {
         if (column && column.filters) {
           column.filters = toFilters(options || [])
           if (isUpdate) {
+            // 已废弃，即将去掉事件触发 new Event('click') -> null
             return $xeTable.handleColumnConfirmFilter(column, new Event('click'))
           }
         }
@@ -290,10 +294,10 @@ hooks.add('tableFilterModule', {
         if (fieldOrColumn) {
           column = handleFieldOrColumn($xeTable, fieldOrColumn)
           if (column) {
-            filterPrivateMethods.handleClearFilter(column)
+            $xeTable.handleClearFilter(column)
           }
         } else {
-          tableFullColumn.forEach(filterPrivateMethods.handleClearFilter)
+          tableFullColumn.forEach($xeTable.handleClearFilter)
         }
         if (!fieldOrColumn || column !== filterStore.column) {
           Object.assign(filterStore, {
@@ -315,8 +319,16 @@ hooks.add('tableFilterModule', {
         handleFilterConfirmFilter(null)
         return nextTick()
       },
+      saveFilterPanelByEvent (evnt) {
+        handleFilterConfirmFilter(evnt)
+        return nextTick()
+      },
       resetFilterPanel () {
         handleFilterResetFilter(null)
+        return nextTick()
+      },
+      resetFilterPanelByEvent (evnt) {
+        handleFilterResetFilter(evnt)
         return nextTick()
       },
       getCheckedFilters () {

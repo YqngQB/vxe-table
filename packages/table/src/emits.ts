@@ -39,14 +39,17 @@ export default [
   'clear-merge',
   'sort-change',
   'clear-sort',
+  'clear-all-sort',
   'filter-change',
   'filter-visible',
   'clear-filter',
+  'clear-all-filter',
 
   'resizable-change', // 废弃
 
   'column-resizable-change',
   'row-resizable-change',
+  'toggle-row-group-expand',
   'toggle-row-expand',
   'toggle-tree-expand',
   'menu-click',

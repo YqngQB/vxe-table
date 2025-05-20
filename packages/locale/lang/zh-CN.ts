@@ -81,7 +81,8 @@ export default {
       maxFixedCol: '最大冻结列的数量不能超过 {0} 个',
       dragTip: '移动：{0}',
       resizeColTip: '宽：{0} 像素',
-      resizeRowTip: '高：{0} 像素'
+      resizeRowTip: '高：{0} 像素',
+      rowGroupContentTotal: '{0}（{1}）'
     },
     grid: {
       selectOneRecord: '请至少选择一条记录！',
@@ -244,6 +245,9 @@ export default {
     datePicker: {
       yearTitle: '{0} 年'
     },
+    dateRangePicker: {
+      pleaseRange: '请选择开始日期与结束日期'
+    },
     input: {
       date: {
         m1: '01 月',
@@ -271,7 +275,7 @@ export default {
           year: 'yyyy'
         },
         weeks: {
-          w: '周',
+          w: '',
           w0: '周日',
           w1: '周一',
           w2: '周二',

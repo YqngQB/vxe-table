@@ -176,7 +176,7 @@ function getComponentOns (renderOpts: any, params: any, eFns?: {
   model: (cellValue: any) => void
   change?: (...args: any[]) => void
   blur?: (...args: any[]) => void
-}) {
+}, eventOns?: Record<string, any>) {
   const { events } = renderOpts
   const modelEvent = getModelEvent(renderOpts)
   const changeEvent = getChangeEvent(renderOpts)
@@ -214,7 +214,7 @@ function getComponentOns (renderOpts: any, params: any, eFns?: {
       }
     }
   }
-  return ons
+  return eventOns ? Object.assign(ons, eventOns) : ons
 }
 
 function getEditOns (renderOpts: VxeGlobalRendererHandles.RenderTableEditOptions, params: VxeGlobalRendererHandles.RenderTableEditParams & { $table: VxeTableConstructor & VxeTablePrivateMethods }) {
@@ -358,7 +358,18 @@ function defaultEditRender (renderOpts: VxeGlobalRendererHandles.RenderTableEdit
   ]
 }
 
-function radioAndCheckboxEditRender (renderOpts: VxeGlobalRendererHandles.RenderTableEditOptions, params: VxeGlobalRendererHandles.RenderEditParams & { $table: VxeTableConstructor & VxeTablePrivateMethods }) {
+function checkboxEditRender (renderOpts: VxeGlobalRendererHandles.RenderTableEditOptions, params: VxeGlobalRendererHandles.RenderEditParams & { $table: VxeTableConstructor & VxeTablePrivateMethods }) {
+  const { row, column } = params
+  const cellValue = getCellValue(row, column)
+  return [
+    h(getDefaultComponent(renderOpts), {
+      ...getCellEditProps(renderOpts, params, cellValue),
+      ...getEditOns(renderOpts, params)
+    })
+  ]
+}
+
+function radioAndCheckboxGroupEditRender (renderOpts: VxeGlobalRendererHandles.RenderTableEditOptions, params: VxeGlobalRendererHandles.RenderEditParams & { $table: VxeTableConstructor & VxeTablePrivateMethods }) {
   const { options } = renderOpts
   const { row, column } = params
   const cellValue = getCellValue(row, column)
@@ -411,12 +422,15 @@ function renderNativeOptgroups (renderOpts: any, params: any, renderOptionsMetho
   const { optionGroups, optionGroupProps = {} } = renderOpts
   const groupOptions = optionGroupProps.options || 'options'
   const groupLabel = optionGroupProps.label || 'label'
-  return optionGroups.map((group: any, gIndex: any) => {
-    return h('optgroup', {
-      key: gIndex,
-      label: group[groupLabel]
-    }, renderOptionsMethods(group[groupOptions], renderOpts, params))
-  })
+  if (optionGroups) {
+    return optionGroups.map((group: any, gIndex: any) => {
+      return h('optgroup', {
+        key: gIndex,
+        label: group[groupLabel]
+      }, renderOptionsMethods(group[groupOptions], renderOpts, params))
+    })
+  }
+  return []
 }
 
 /**
@@ -429,15 +443,18 @@ function renderNativeOptions (options: any, renderOpts: any, params: any) {
   const valueProp = optionProps.value || 'value'
   const disabledProp = optionProps.disabled || 'disabled'
   const cellValue = isImmediateCell(renderOpts, params) ? getCellValue(row, column) : column.model.value
-  return options.map((option: any, oIndex: any) => {
-    return h('option', {
-      key: oIndex,
-      value: option[valueProp],
-      disabled: option[disabledProp],
-      /* eslint-disable eqeqeq */
-      selected: option[valueProp] == cellValue
-    }, option[labelProp])
-  })
+  if (options) {
+    return options.map((option: any, oIndex: any) => {
+      return h('option', {
+        key: oIndex,
+        value: option[valueProp],
+        disabled: option[disabledProp],
+        /* eslint-disable eqeqeq */
+        selected: option[valueProp] == cellValue
+      }, option[labelProp])
+    })
+  }
+  return []
 }
 
 function nativeFilterRender (renderOpts: any, params: any) {
@@ -805,6 +822,76 @@ renderer.mixin({
     renderTableFilter: defaultFilterRender,
     tableFilterDefaultMethod: handleFilterMethod
   },
+  VxeDateRangePicker: {
+    tableAutoFocus: 'input',
+    renderTableEdit (renderOpts, params: VxeGlobalRendererHandles.RenderTableEditParams & { $table: VxeTableConstructor & VxeTablePrivateMethods }) {
+      const { startField, endField } = renderOpts
+      const { $table, row, column } = params
+      const { model } = column
+      const cellValue = getCellValue(row, column)
+      const seProps: Record<string, any> = {}
+      const seOs: Record<string, any> = {}
+      if (startField && endField) {
+        seProps.startValue = XEUtils.get(row, startField)
+        seProps.endValue = XEUtils.get(row, endField)
+        seOs['onUpdate:startValue'] = (value: any) => {
+          if (startField) {
+            XEUtils.set(row, startField, value)
+          }
+        }
+        seOs['onUpdate:endValue'] = (value: any) => {
+          if (endField) {
+            XEUtils.set(row, endField, value)
+          }
+        }
+      }
+      return [
+        h(getDefaultComponent(renderOpts), {
+          ...getCellEditProps(renderOpts, params, cellValue, seProps),
+          ...getComponentOns(renderOpts, params, {
+            model (cellValue) {
+              model.update = true
+              model.value = cellValue
+              setCellValue(row, column, cellValue)
+            },
+            change () {
+              $table.updateStatus(params)
+            },
+            blur () {
+              $table.handleCellRuleUpdateStatus('blur', params)
+            }
+          }, seOs)
+        })
+      ]
+    },
+    renderTableCell (renderOpts, params) {
+      const { startField, endField } = renderOpts
+      const { row, column } = params
+      let startValue = ''
+      let endValue = ''
+      if (startField && endField) {
+        startValue = XEUtils.get(row, startField)
+        endValue = XEUtils.get(row, endField)
+      } else {
+        const cellValue = XEUtils.get(row, column.field)
+        if (cellValue) {
+          if (XEUtils.isArray(cellValue)) {
+            startValue = cellValue[0]
+            endValue = cellValue[1]
+          } else {
+            const strs = `${cellValue}`.split(',')
+            startValue = strs[0]
+            endValue = strs[1]
+          }
+        }
+      }
+      let cellLabel = ''
+      if (startValue && endValue) {
+        cellLabel = `${startValue} ~ ${endValue}`
+      }
+      return getCellLabelVNs(renderOpts, params, cellLabel)
+    }
+  },
   VxeTextarea: {
     tableAutoFocus: 'textarea',
     renderTableEdit: defaultEditRender,
@@ -948,10 +1035,13 @@ renderer.mixin({
     }
   },
   VxeRadioGroup: {
-    renderTableDefault: radioAndCheckboxEditRender
+    renderTableDefault: radioAndCheckboxGroupEditRender
+  },
+  VxeCheckbox: {
+    renderTableDefault: checkboxEditRender
   },
   VxeCheckboxGroup: {
-    renderTableDefault: radioAndCheckboxEditRender
+    renderTableDefault: radioAndCheckboxGroupEditRender
   },
   VxeSwitch: {
     tableAutoFocus: 'button',

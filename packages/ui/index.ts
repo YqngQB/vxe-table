@@ -132,7 +132,17 @@ VxeUI.setConfig({
       // isEvery: false,
       showIcon: true
     },
+    rowGroupConfig: {
+      padding: true,
+      rowField: 'id',
+      parentField: '_X_ROW_PARENT_KEY',
+      childrenField: '_X_ROW_CHILDREN',
+      mapChildrenField: '_X_ROW_CHILD_LIST',
+      indent: 20,
+      showIcon: true
+    },
     treeConfig: {
+      padding: true,
       rowField: 'id',
       parentField: 'parentId',
       childrenField: 'children',
@@ -197,20 +207,20 @@ VxeUI.setConfig({
       isReplace: true
     },
     virtualXConfig: {
-      enabled: true,
-      gt: 28,
+      enabled: false,
+      gt: 24,
       preSize: 1,
       oSize: 0
     },
     virtualYConfig: {
-      enabled: true,
+      enabled: false,
       gt: 100,
       preSize: 1,
       oSize: 0
     },
     scrollbarConfig: {
-      // width: 0,
-      // height: 0
+      // width: 14,
+      // height: 14
     }
   },
   // export: {
@@ -295,6 +305,8 @@ VxeUI.setIcon({
   TABLE_DRAG_STATUS_SUB_ROW: iconPrefix + 'add-sub',
   TABLE_DRAG_STATUS_COLUMN: iconPrefix + 'swap',
   TABLE_DRAG_DISABLED: iconPrefix + 'no-drop',
+  TABLE_ROW_GROUP_OPEN: iconPrefix + 'arrow-right rotate90',
+  TABLE_ROW_GROUP_CLOSE: iconPrefix + 'arrow-right',
 
   // toolbar
   TOOLBAR_TOOLS_REFRESH: iconPrefix + 'repeat',

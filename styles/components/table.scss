@@ -1,6 +1,35 @@
+@use "sass:map";
+@use "sass:list";
 @use '../helpers/baseMixin.scss';
 @use './icon.scss';
 @use './table-module/all.scss';
+
+$btnThemeList: (
+  (
+    name: "primary",
+    textColor: var(--vxe-ui-font-primary-color),
+  ),
+  (
+    name: "success",
+    textColor: var(--vxe-ui-status-success-color),
+  ),
+  (
+    name: "info",
+    textColor: var(--vxe-ui-status-info-color),
+  ),
+  (
+    name: "warning",
+    textColor: var(--vxe-ui-status-warning-color),
+  ),
+  (
+    name: "danger",
+    textColor: var(--vxe-ui-status-danger-color),
+  ),
+  (
+    name: "error",
+    textColor: var(--vxe-ui-status-error-color),
+  )
+);
 
 .vxe-table-slots,
 .vxe-table--file-form {
@@ -109,6 +138,7 @@
         .vxe-select,
         .vxe-tree-select,
         .vxe-date-picker,
+        .vxe-date-range-picker,
         .vxe-number-input,
         .vxe-ico-picker {
           width: 100%;
@@ -131,10 +161,12 @@
         & > .vxe-select,
         & > .vxe-tree-select,
         & > .vxe-date-picker,
+        & > .vxe-date-range-picker,
         & > .vxe-number-input,
         & > .vxe-ico-picker {
           width: 100%;
         }
+        & > .vxe-row-group--tree-node,
         & > .vxe-cell--tree-node {
           .vxe-default-input,
           .vxe-default-textarea,
@@ -144,6 +176,7 @@
           .vxe-select,
           .vxe-tree-select,
           .vxe-date-picker,
+          .vxe-date-range-picker,
           .vxe-number-input,
           .vxe-ico-picker {
             width: 100%;
@@ -164,6 +197,7 @@
   & > .vxe-select,
   & > .vxe-tree-select,
   & > .vxe-date-picker,
+  & > .vxe-date-range-picker,
   & > .vxe-number-input,
   & > .vxe-ico-picker {
     width: 100%;
@@ -221,6 +255,7 @@
   & > .vxe-default-textarea {
     resize: none;
   }
+  & > .vxe-row-group--tree-node,
   & > .vxe-cell--tree-node {
     .vxe-input > .vxe-input--inner,
     .vxe-textarea > .vxe-textarea--inner {
@@ -741,18 +776,24 @@
   // user-select: none;
   &.col--ellipsis {
     & > .vxe-cell {
-      display: flex;
-      align-items: center;
+      .vxe-cell--wrapper {
+        display: flex;
+        align-items: center;
+        .vxe-cell--drag-handle,
+        .vxe-cell--sort,
+        .vxe-cell--filter,
+        .vxe-cell-title-prefix-icon,
+        .vxe-cell-title-suffix-icon,
+        .vxe-cell--checkbox,
+        .vxe-cell-title-suffix-icon,
+        .vxe-cell--required-icon {
+          flex-shrink: 0;
+        }
+      }
       .vxe-cell--title {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-      }
-      & > i,
-      & > span {
-        &:not(.vxe-cell--title) {
-          flex-shrink: 0;
-        }
       }
     }
   }
@@ -762,14 +803,16 @@
     width: 0.8em;
     height: 1em;
     line-height: 1em;
-    font-family: Verdana,Arial,Tahoma;
-    font-weight: normal;
     position: relative;
-    &:before {
-      content: "*";
-      position: absolute;
-      left: 0;
-      top: 0.2em;
+    & > i {
+      font-family: Verdana,Arial,Tahoma;
+      font-weight: normal;
+      &:before {
+        content: "*";
+        position: absolute;
+        left: 0;
+        top: 0.2em;
+      }
     }
   }
   // .vxe-cell--required-icon,
@@ -790,6 +833,12 @@
   .vxe-cell-title-prefix-icon,
   .vxe-cell-title-suffix-icon {
     cursor: help;
+    @for $index from 0 to list.length($btnThemeList) {
+      $item: list.nth($btnThemeList, $index + 1);
+      &.theme--#{map.get($item, name)} {
+        color: map.get($item, textColor);
+      }
+    }
   }
 }
 
@@ -896,84 +945,6 @@
       }
     }
   }
-  .vxe-body--row {
-    &.row--stripe {
-      background-color: var(--vxe-ui-table-row-striped-background-color);
-    }
-    &.row--radio {
-      background-color: var(--vxe-ui-table-row-radio-checked-background-color);
-    }
-    &.row--checked {
-      background-color: var(--vxe-ui-table-row-checkbox-checked-background-color);
-    }
-    &.row--current {
-      background-color: var(--vxe-ui-table-row-current-background-color);
-    }
-    &.row--hover {
-      background-color: var(--vxe-ui-table-row-hover-background-color);
-      &.row--stripe {
-        background-color: var(--vxe-ui-table-row-hover-striped-background-color);
-      }
-      &.row--radio {
-        background-color: var(--vxe-ui-table-row-hover-radio-checked-background-color);
-      }
-      &.row--checked {
-        background-color: var(--vxe-ui-table-row-hover-checkbox-checked-background-color);
-      }
-      &.row--current {
-        background-color: var(--vxe-ui-table-row-hover-current-background-color);
-      }
-    }
-  }
-  // &.is--tree-line {
-  //   .vxe-body--row {
-  //     &.row--stripe {
-  //       .vxe-tree--btn-wrapper {
-  //         background-color: var(--vxe-ui-table-row-striped-background-color);
-  //       }
-  //     }
-  //     &.row--radio {
-  //       .vxe-tree--btn-wrapper {
-  //         background-color: var(--vxe-ui-table-row-radio-checked-background-color);
-  //       }
-  //     }
-  //     &.row--checked {
-  //       .vxe-tree--btn-wrapper {
-  //         background-color: var(--vxe-ui-table-row-checkbox-checked-background-color);
-  //       }
-  //     }
-  //     &.row--current {
-  //       .vxe-tree--btn-wrapper {
-  //         background-color: var(--vxe-ui-table-row-current-background-color);
-  //       }
-  //     }
-  //     &.row--hover {
-  //       .vxe-tree--btn-wrapper {
-  //         background-color: var(--vxe-ui-table-row-hover-background-color);
-  //       }
-  //       &.row--stripe {
-  //         .vxe-tree--btn-wrapper {
-  //           background-color: var(--vxe-ui-table-row-hover-striped-background-color);
-  //         }
-  //       }
-  //       &.row--radio {
-  //         .vxe-tree--btn-wrapper {
-  //           background-color: var(--vxe-ui-table-row-hover-radio-checked-background-color);
-  //         }
-  //       }
-  //       &.row--checked {
-  //         .vxe-tree--btn-wrapper {
-  //           background-color: var(--vxe-ui-table-row-hover-checkbox-checked-background-color);
-  //         }
-  //       }
-  //       &.row--current {
-  //         .vxe-tree--btn-wrapper {
-  //           background-color: var(--vxe-ui-table-row-hover-current-background-color);
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
   &.col-drag--resize {
     .vxe-table--main-wrapper,
     .vxe-table--fixed-left-wrapper,
@@ -1066,12 +1037,6 @@
     position: relative;
     line-height: var(--vxe-ui-table-row-line-height);
     text-align: left;
-    &.col--current {
-      background-color: var(--vxe-ui-table-column-current-background-color);
-      // .vxe-tree--btn-wrapper {
-      //   background-color: var(--vxe-ui-table-column-current-background-color);
-      // }
-    }
     &.col--center {
       text-align: center;
       & > .vxe-cell {
@@ -1085,17 +1050,20 @@
       }
     }
   }
-  // &.is--tree-line {
-  //   .vxe-header--column,
-  //   .vxe-body--column,
-  //   .vxe-footer--column {
-  //     &.col--current {
-  //       .vxe-tree--btn-wrapper {
-  //         background-color: var(--vxe-ui-table-column-current-background-color);
-  //       }
-  //     }
-  //   }
-  // }
+  .vxe-header--column {
+    &.col--ellipsis {
+      &.col--center {
+        .vxe-cell--wrapper {
+          justify-content: center;
+        }
+      }
+      &.col--right {
+        .vxe-cell--wrapper {
+          justify-content: right;
+        }
+      }
+    }
+  }
   .vxe-header--column,
   .vxe-footer--column {
     &.col--ellipsis {
@@ -1111,6 +1079,134 @@
       }
     }
   }
+
+  // 行高亮
+  .vxe-body--row {
+    &.row--stripe {
+      & > .vxe-body--column {
+        background-color: var(--vxe-ui-table-row-striped-background-color);
+      }
+    }
+  }
+
+  // 列高亮
+  .vxe-header--column,
+  .vxe-body--column,
+  .vxe-footer--column {
+    position: relative;
+    line-height: var(--vxe-ui-table-row-line-height);
+    text-align: left;
+    &.col--current {
+      background-color: var(--vxe-ui-table-column-current-background-color);
+      // .vxe-cell--tree-btn {
+      //   background-color: var(--vxe-ui-table-column-current-background-color);
+      // }
+    }
+  }
+  // &.is--tree-line {
+  //   .vxe-header--column,
+  //   .vxe-body--column,
+  //   .vxe-footer--column {
+  //     &.col--current {
+  //       .vxe-cell--tree-btn {
+  //         background-color: var(--vxe-ui-table-column-current-background-color);
+  //       }
+  //     }
+  //   }
+  // }
+
+  // 行高亮
+  .vxe-body--row {
+    &.row--radio {
+      & > .vxe-body--column {
+        background-color: var(--vxe-ui-table-row-radio-checked-background-color);
+      }
+    }
+    &.row--checked {
+      & > .vxe-body--column {
+        background-color: var(--vxe-ui-table-row-checkbox-checked-background-color);
+      }
+    }
+    &.row--current {
+      & > .vxe-body--column {
+        background-color: var(--vxe-ui-table-row-current-background-color);
+      }
+    }
+    &.row--hover {
+      & > .vxe-body--column {
+        background-color: var(--vxe-ui-table-row-hover-background-color);
+      }
+      &.row--stripe {
+        & > .vxe-body--column {
+          background-color: var(--vxe-ui-table-row-hover-striped-background-color);
+        }
+      }
+      &.row--radio {
+        & > .vxe-body--column {
+          background-color: var(--vxe-ui-table-row-hover-radio-checked-background-color);
+        }
+      }
+      &.row--checked {
+        & > .vxe-body--column {
+          background-color: var(--vxe-ui-table-row-hover-checkbox-checked-background-color);
+        }
+      }
+      &.row--current {
+        & > .vxe-body--column {
+          background-color: var(--vxe-ui-table-row-hover-current-background-color);
+        }
+      }
+    }
+  }
+  // &.is--tree-line {
+  //   .vxe-body--row {
+  //     &.row--stripe {
+  //       .vxe-cell--tree-btn {
+  //         background-color: var(--vxe-ui-table-row-striped-background-color);
+  //       }
+  //     }
+  //     &.row--radio {
+  //       .vxe-cell--tree-btn {
+  //         background-color: var(--vxe-ui-table-row-radio-checked-background-color);
+  //       }
+  //     }
+  //     &.row--checked {
+  //       .vxe-cell--tree-btn {
+  //         background-color: var(--vxe-ui-table-row-checkbox-checked-background-color);
+  //       }
+  //     }
+  //     &.row--current {
+  //       .vxe-cell--tree-btn {
+  //         background-color: var(--vxe-ui-table-row-current-background-color);
+  //       }
+  //     }
+  //     &.row--hover {
+  //       .vxe-cell--tree-btn {
+  //         background-color: var(--vxe-ui-table-row-hover-background-color);
+  //       }
+  //       &.row--stripe {
+  //         .vxe-cell--tree-btn {
+  //           background-color: var(--vxe-ui-table-row-hover-striped-background-color);
+  //         }
+  //       }
+  //       &.row--radio {
+  //         .vxe-cell--tree-btn {
+  //           background-color: var(--vxe-ui-table-row-hover-radio-checked-background-color);
+  //         }
+  //       }
+  //       &.row--checked {
+  //         .vxe-cell--tree-btn {
+  //           background-color: var(--vxe-ui-table-row-hover-checkbox-checked-background-color);
+  //         }
+  //       }
+  //       &.row--current {
+  //         .vxe-cell--tree-btn {
+  //           background-color: var(--vxe-ui-table-row-hover-current-background-color);
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
   
   /*边框*/
   .vxe-table--footer-wrapper {
@@ -1607,10 +1703,28 @@
     border-color: var(--vxe-ui-table-tree-node-line-color);
     pointer-events: none;
   }
+  .vxe-row-group--tree-node,
   .vxe-cell--tree-node {
     position: relative;
   }
-  .vxe-tree--btn-wrapper {
+  .vxe-cell--tree-btn {
+    &:hover {
+      color: var(--vxe-ui-font-color);
+    }
+    & > i {
+      display: block;
+      color: var(--vxe-ui-font-lighten-color);
+      @include baseMixin.createAnimationTransition(transform);
+     // background-color: var(--vxe-ui-layout-background-color); // 影响选择行相关
+    }
+  }
+  .vxe-row-group-cell,
+  .vxe-tree-cell {
+    display: block;
+    padding-left: 1.5em;
+  }
+  .vxe-cell--tree-btn,
+  .vxe-row-group--node-btn{
     position: absolute;
     top: 50%;
     width: 1em;
@@ -1620,27 +1734,25 @@
     z-index: 1;
     user-select: none;
     cursor: pointer;
-    & > i {
-      background-color: var(--vxe-ui-layout-background-color);
-    }
   }
-  .vxe-tree--node-btn {
-    display: block;
-    color: var(--vxe-ui-font-lighten-color);
-    @include baseMixin.createAnimationTransition(transform);
+
+  /*行分组*/
+  .vxe-row-group--node-btn {
     &:hover {
       color: var(--vxe-ui-font-color);
     }
-  }
-  .vxe-tree-cell {
-    display: block;
-    padding-left: 1.5em;
+    & > i {
+      display: block;
+      color: var(--vxe-ui-font-lighten-color);
+      @include baseMixin.createAnimationTransition(transform);
+    }
   }
 
   /*单元格高度*/
   .vxe-body--column {
     &.col--ellipsis {
       & > .vxe-cell {
+        .vxe-row-group-cell,
         .vxe-tree-cell {
           overflow: hidden;
           text-overflow: ellipsis;
@@ -1652,7 +1764,8 @@
     &.col--rs-height,
     &.col--auto-height {
       overflow: hidden;
-      &.col--tree-node {
+      &.col--tree-node,
+      &.col--valid-error {
         overflow: unset;
       }
       & > .vxe-cell {
@@ -1680,6 +1793,7 @@
           }
         }
       }
+      &.vxe-row-group-cell,
       &.vxe-tree-cell,
       &.col--vertical-top {
         & > .vxe-cell {

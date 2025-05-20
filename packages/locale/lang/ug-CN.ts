@@ -81,7 +81,8 @@ export default {
       maxFixedCol: 'توڭلىتىشقا بولىدىغان ئەڭ چوڭ قۇر سانى  {0} دانە',
       dragTip: 'يۆتكەش：{0}',
       resizeColTip: '宽：{0} 像素',
-      resizeRowTip: '高：{0} 像素'
+      resizeRowTip: '高：{0} 像素',
+      rowGroupContentTotal: '{0}（{1}）'
     },
     grid: {
       selectOneRecord: 'كەم بولغاندا بىر تال ئۇچۇر تاللاڭ',
@@ -244,6 +245,9 @@ export default {
     datePicker: {
       yearTitle: '{0} يىل'
     },
+    dateRangePicker: {
+      pleaseRange: '请选择开始日期与结束日期'
+    },
     input: {
       date: {
         m1: '01 ئاي',
@@ -271,7 +275,7 @@ export default {
           year: 'yyyy'
         },
         weeks: {
-          w: 'ھەپتە',
+          w: '',
           w0: 'يەكشەنبە',
           w1: 'دۈشەنبە',
           w2: 'سەيشەنبە',
