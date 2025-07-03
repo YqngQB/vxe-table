@@ -23,7 +23,7 @@
       :row-config="{resizable: true,drag: true}"
       :scroll-x="{enabled: true, gt: 0}"
       :scroll-y="{enabled: true, gt: 0}"
-      :scrollbar-config="{x:{position:'top'},y:{position:'left'}}"
+      :scrollbar-config="{x:{position:'bottom'},y:{position:'right'}}"
       :checkbox-config="{ highlight: true, range: true}"
       :data="tableData"
       :footer-data="footerData">

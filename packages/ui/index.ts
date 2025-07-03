@@ -43,7 +43,8 @@ VxeUI.setConfig({
       showDragTip: true,
       isSyncAutoHeight: true,
       isSyncAutoWidth: true,
-      minHeight: 18
+      minHeight: 18,
+      isDblclickAutoWidth: true
     },
     radioConfig: {
       // trigger: 'default'

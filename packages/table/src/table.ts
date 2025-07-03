@@ -22,6 +22,7 @@ import TableMenuPanelComponent from '../module/menu/panel'
 
 import type { VxeLoadingComponent, VxeTooltipInstance, VxeTooltipComponent, VxeTabsConstructor, VxeTabsPrivateMethods, ValueOf, VxeComponentSlotType } from 'vxe-pc-ui'
 import type { VxeGridConstructor, VxeGridPrivateMethods, VxeTableConstructor, TableReactData, TableInternalData, VxeTablePropTypes, VxeToolbarConstructor, TablePrivateMethods, VxeTablePrivateRef, VxeTablePrivateComputed, VxeTablePrivateMethods, TableMethods, VxeTableMethods, VxeTableDefines, VxeTableEmits, VxeTableProps, VxeColumnPropTypes, VxeTableCustomPanelConstructor } from '../../../types'
+import { useTableMouseScroll } from './mouse-scroll-binding'
 
 const { getConfig, getIcon, getI18n, renderer, formats, createEvent, globalResize, interceptor, hooks, globalEvents, GLOBAL_EVENT_KEYS, useFns, renderEmptyElement } = VxeUI
 
@@ -2248,6 +2249,10 @@ export default defineVxeComponent({
       const mouseOpts = computeMouseOpts.value
       const expandOpts = computeExpandOpts.value
       const bodyWrapperElem = getRefElem(elemStore['main-body-wrapper'])
+      if (bodyWrapperElem) {
+        bodyWrapperElem.style.transform = 'translateZ(0)'
+        bodyWrapperElem.style.willChange = 'transform'
+      }
       const bodyTableElem = getRefElem(elemStore['main-body-table'])
       if (emptyPlaceholderElem) {
         emptyPlaceholderElem.style.top = `${headerHeight}px`
@@ -4029,22 +4034,45 @@ export default defineVxeComponent({
       }, fpsTime)
     }
 
+    function calculateFpsTime (visibleSize: number): number {
+      if (visibleSize > 40) {
+        return 25
+      } else if (visibleSize > 30) {
+        return 20
+      } else if (visibleSize > 20) {
+        return 15
+      } else {
+        return 10
+      }
+    }
+
     const lazyScrollYData = () => {
       const { lyTimeout, lyRunTime, scrollYStore } = internalData
       const { visibleSize } = scrollYStore
-      const fpsTime = visibleSize > 30 ? 32 : (visibleSize > 20 ? 18 : 8)
+
+      // 获取当前时间和滚动速度
+      const now = Date.now()
+
+      // 当可视行数较多时，适当增加渲染间隔，但不能太大
+      const fpsTime = calculateFpsTime(visibleSize)
+
+      // 2. 取消已有的定时器
       if (lyTimeout) {
         clearTimeout(lyTimeout)
       }
-      if (!lyRunTime || lyRunTime + fpsTime < Date.now()) {
-        internalData.lyRunTime = Date.now()
+
+      const needImmediateRender = !lyRunTime ||
+        lyRunTime + fpsTime < now
+      if (needImmediateRender) {
+        internalData.lyRunTime = now
         loadScrollYData()
       }
-      internalData.lyTimeout = setTimeout(() => {
+      internalData.lyTimeout = window.requestAnimationFrame(() => {
+        // 重置状态
         internalData.lyTimeout = undefined
         internalData.lyRunTime = undefined
         loadScrollYData()
-      }, fpsTime)
+      })
     }
 
     const checkLastSyncScroll = (isRollX: boolean, isRollY: boolean) => {
@@ -11229,6 +11257,7 @@ export default defineVxeComponent({
         class: 'vxe-table--viewport-wrapper'
       }, [
         h('div', {
+          ref: refTableMainElem,
           class: 'vxe-table--main-wrapper'
         }, [
           /**
@@ -11760,7 +11789,11 @@ export default defineVxeComponent({
       tablePrivateMethods.preventEvent(null, 'deactivated', { $table: $xeTable })
     })
 
+    const refTableMainElem = ref<HTMLDivElement>()
+    const { enable } = useTableMouseScroll($xeTable, refTableMainElem, { requireKey: 'Shift' })
+
     onMounted(() => {
+      // enable()
       const columnOpts = computeColumnOpts.value
       const rowOpts = computeRowOpts.value
       const customOpts = computeCustomOpts.value

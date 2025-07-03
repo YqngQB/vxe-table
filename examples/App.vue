@@ -22,21 +22,21 @@ import { VxeUI } from '../packages'
 
 const navList = ref([
   { name: 'Home', icon: 'vxe-icon-user-fill', routerLink: { path: '/' } },
-  { name: 'ToolbarTest', routerLink: { name: 'ToolbarTest' } },
-  { name: 'TableTest1', routerLink: { name: 'TableTest1' } },
-  { name: 'TableTest2', routerLink: { name: 'TableTest2' } },
-  { name: 'TableTest3', routerLink: { name: 'TableTest3' } },
-  { name: 'TableTest4', routerLink: { name: 'TableTest4' } },
-  { name: 'TableTest5', routerLink: { name: 'TableTest5' } },
-  { name: 'TableTest6', routerLink: { name: 'TableTest6' } },
-  { name: 'TableTest7', routerLink: { name: 'TableTest7' } },
-  { name: 'TableTest8', routerLink: { name: 'TableTest8' } },
-  { name: 'TableTest9', routerLink: { name: 'TableTest9' } },
-  { name: 'TableTest10', routerLink: { name: 'TableTest10' } },
-  { name: 'GridTest', routerLink: { name: 'GridTest' } },
-  { name: 'TestKeepTest1', routerLink: { name: 'TestKeepTest1' } },
-  { name: 'TestKeepTest2', routerLink: { name: 'TestKeepTest2' } },
-  { name: 'TestKeepTest3', routerLink: { name: 'TestKeepTest3' } }
+  // { name: 'ToolbarTest', routerLink: { name: 'ToolbarTest' } },
+  // { name: 'TableTest1', routerLink: { name: 'TableTest1' } },
+  // { name: 'TableTest2', routerLink: { name: 'TableTest2' } },
+  // { name: 'TableTest3', routerLink: { name: 'TableTest3' } },
+  // { name: 'TableTest4', routerLink: { name: 'TableTest4' } },
+  // { name: 'TableTest5', routerLink: { name: 'TableTest5' } },
+  // { name: 'TableTest6', routerLink: { name: 'TableTest6' } },
+  // { name: 'TableTest7', routerLink: { name: 'TableTest7' } },
+  { name: '主题切换', routerLink: { name: 'TableTest8' } },
+  // { name: 'TableTest9', routerLink: { name: 'TableTest9' } },
+  { name: '复杂渲染1', routerLink: { name: 'TableTest10' } },
+  { name: '复杂渲染2', routerLink: { name: 'GridTest' } }
+  // { name: 'TestKeepTest1', routerLink: { name: 'TestKeepTest1' } },
+  // { name: 'TestKeepTest2', routerLink: { name: 'TestKeepTest2' } },
+  // { name: 'TestKeepTest3', routerLink: { name: 'TestKeepTest3' } }
 ])
 
 const theme = ref((localStorage.getItem('VXE_THEME') as 'default' | 'dark') || 'default')

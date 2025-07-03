@@ -1,103 +1,411 @@
 <template>
-  <div>
-    <p>
-      <vxe-button @click="loadDataAndColumns(10, 5)">100行50列</vxe-button>
-      <vxe-button @click="loadDataAndColumns(1000, 80)">1k行80列</vxe-button>
-      <vxe-button @click="loadDataAndColumns(5000, 100)">5k行100列</vxe-button>
-      <vxe-button @click="loadDataAndColumns(10000, 150)">1w行150列</vxe-button>
-      <vxe-button @click="loadDataAndColumns(30000, 200)">3w行200列</vxe-button>
-      <vxe-button @click="loadDataAndColumns(50000, 20)">5w行20列</vxe-button>
-      <vxe-button @click="loadDataAndColumns(100000, 20)">10w行20列</vxe-button>
-      <vxe-button @click="loadDataAndColumns(300000, 20)">30w行20列</vxe-button>
-      <vxe-button @click="loadDataAndColumns(500000, 20)">50w行20列</vxe-button>
-      <vxe-button @click="loadDataAndColumns(1000000, 20)">100w行20列</vxe-button>
-    </p>
-    <p>
-      <vxe-button @click="loadDataAndColumns(5, 10)">50行100列</vxe-button>
-      <vxe-button @click="loadDataAndColumns(80, 1000)">80行1k列</vxe-button>
-      <vxe-button @click="loadDataAndColumns(100, 5000)">100行5k列</vxe-button>
-      <vxe-button @click="loadDataAndColumns(150, 10000)">200行1w列</vxe-button>
-      <vxe-button @click="loadDataAndColumns(200, 30000)">200行3w列</vxe-button>
-      <vxe-button @click="loadDataAndColumns(20, 50000)">20行5w列</vxe-button>
-      <vxe-button @click="loadDataAndColumns(20, 100000)">20行10w列</vxe-button>
-      <vxe-button @click="loadDataAndColumns(20, 200000)">20行20w列</vxe-button>
-      <vxe-button @click="loadDataAndColumns(20, 500000)">20行50w列</vxe-button>
-      <vxe-button @click="loadDataAndColumns(20, 1000000)">20行100w列</vxe-button>
-    </p>
-    <vxe-grid ref="gridRef" v-bind="gridOptions"></vxe-grid>
+  <div class="demo-page-wrapper">
+    <vxe-grid ref="gridRef" v-bind="gridOptions" v-on="gridEvents">
+      <template #toolbarButtons>
+        <span>数据：</span>
+        <vxe-select v-model="gridOptions.pagerConfig.pageSize" :options="dataOptions" @change="changeRowSizeEvent"></vxe-select>
+        <span>字体大小：</span>
+        <vxe-radio-group v-model="gridOptions.size">
+          <vxe-radio-button label="" content="18"></vxe-radio-button>
+          <vxe-radio-button label="medium" content="16"></vxe-radio-button>
+          <vxe-radio-button label="small" content="14"></vxe-radio-button>
+          <vxe-radio-button label="mini" content="12"></vxe-radio-button>
+        </vxe-radio-group>
+        <span>单元格高度：</span>
+        <vxe-radio-group v-model="gridOptions.size">
+          <vxe-radio-button label="" content="默认"></vxe-radio-button>
+          <vxe-radio-button label="medium" content="中"></vxe-radio-button>
+          <vxe-radio-button label="small" content="小"></vxe-radio-button>
+          <vxe-radio-button label="mini" content="迷你"></vxe-radio-button>
+        </vxe-radio-group>
+        <span>字体颜色：</span>
+        <vxe-color-picker v-model="headerColor" :colors="colorList" clearable></vxe-color-picker>
+        <vxe-color-picker v-model="bodyColor" :colors="colorList" clearable></vxe-color-picker>
+        <vxe-color-picker v-model="footerColor" :colors="colorList" clearable></vxe-color-picker>
+      </template>
+      <template #job="{ row }">
+        <vxe-tag status="success">{{row.job}}</vxe-tag>
+      </template>
+      <template #emailDefault="{ row }">
+        <vxe-text :content="row.email" click-to-copy></vxe-text>
+      </template>
+    </vxe-grid>
   </div>
 </template>
 
-<script lang="ts" setup>
-import { ref, reactive, onMounted } from 'vue'
-import { VxeGridInstance, VxeGridProps, VxeGridPropTypes } from '../../../types'
-import { VxeUI } from '../../../packages'
-
-interface RowVO {
-  id: number
-  [key: string]: string | number
-}
-
-const gridRef = ref<VxeGridInstance<RowVO>>()
-
-const gridOptions = reactive<VxeGridProps<RowVO>>({
-  border: true,
-  round: true,
-  loading: false,
-  showOverflow: true,
-  showHeaderOverflow: true,
-  showFooterOverflow: true,
-  height: 600,
-  scrollbarConfig: { y: { position: 'left' } },
-  scrollY: {
-    enabled: true,
-    gt: 0
-  },
-  scrollX: {
-    enabled: true,
-    gt: 0
+<script setup>
+import { ref, reactive, nextTick } from 'vue'
+import XEUtils from 'xe-utils'
+const gridRef = ref()
+const dataOptions = ref([
+  { label: '加载 3 行', value: 3 },
+  { label: '加载 20 行', value: 20 },
+  { label: '加载 100 行', value: 100 },
+  { label: '加载 500 行', value: 500 },
+  { label: '加载 1000 行', value: 1000 },
+  { label: '加载 5000 行', value: 5000 },
+  { label: '加载 10000 行', value: 10000 },
+  { label: '加载 50000 行', value: 50000 },
+  { label: '加载 100000 行', value: 100000 }
+])
+const avatarUrlCellRender = reactive({
+  name: 'VxeImage',
+  props: {
+    circle: true,
+    width: 36,
+    height: 36
   }
 })
-
-// 模拟行与列数据
-const loadDataAndColumns = (rowSize: number, colSize: number) => {
-  gridOptions.loading = true
-  setTimeout(() => {
-    const $grid = gridRef.value
-    const colList: VxeGridPropTypes.Columns = []
-    for (let i = 0; i < colSize; i++) {
-      colList.push({
-        field: `col${i}`,
-        title: `标题${i}`,
-        width: 160
-      })
+const levelNumCellRender = reactive({
+  name: 'VxeRate',
+  props: {
+    readonly: true
+  }
+})
+const flag1CellRender = reactive({
+  name: 'VxeSwitch',
+  props: {
+    readonly: true
+  }
+})
+const cityOptions = [
+  { label: '广东省深圳市', value: 'sz' },
+  { label: '广东省广州市', value: 'gz' },
+  { label: '北京市', value: 'bj' },
+  { label: '上海市', value: 'sh' },
+  { label: '浙江省杭州市', value: 'hz' }
+]
+const formatSex = ({ cellValue }) => {
+  if (cellValue) {
+    return cellValue === '1' ? '男' : '女'
+  }
+  return ''
+}
+const formatCity = ({ cellValue }) => {
+  const item = cityOptions.find(item => item.value === cellValue)
+  return item ? item.label : cellValue
+}
+const formatAmount = ({ cellValue }) => {
+  if (cellValue) {
+    return `￥${XEUtils.commafy(cellValue, { digits: 2 })}`
+  }
+  return ''
+}
+const countRow = reactive({
+  seq: '合计',
+  name: 0,
+  annualStatement: {
+    m1: 0,
+    m2: 0,
+    m3: 0,
+    m4: 0,
+    m5: 0,
+    m6: 0,
+    m7: 0,
+    m8: 0,
+    m9: 0,
+    m10: 0,
+    m11: 0,
+    m12: 0
+  }
+})
+const meanRow = reactive({
+  seq: '平均',
+  name: 0,
+  annualStatement: {
+    m1: 0,
+    m2: 0,
+    m3: 0,
+    m4: 0,
+    m5: 0,
+    m6: 0,
+    m7: 0,
+    m8: 0,
+    m9: 0,
+    m10: 0,
+    m11: 0,
+    m12: 0
+  }
+})
+const gridOptions = reactive({
+  border: true,
+  loading: false,
+  stripe: true,
+  showOverflow: true,
+  showFooter: true,
+  height: 800,
+  columnConfig: {
+    resizable: true,
+    drag: true
+  },
+  columnDragConfig: {
+    trigger: 'cell',
+    showIcon: false,
+    showGuidesStatus: true
+  },
+  rowConfig: {
+    isHover: true
+  },
+  resizableConfig: {
+    isDblclickAutoWidth: true
+  },
+  toolbarConfig: {
+    custom: true,
+    refresh: true,
+    zoom: true,
+    slots: {
+      buttons: 'toolbarButtons'
     }
-    const dataList: RowVO[] = []
-    for (let i = 0; i < rowSize; i++) {
-      const item: RowVO = {
-        id: 10000 + i
+  },
+  checkboxConfig: {
+    range: true
+  },
+  mouseConfig: {
+    selected: true
+  },
+  keyboardConfig: {
+    isEdit: true,
+    isArrow: true,
+    isEnter: true,
+    isBack: true,
+    isDel: true,
+    isEsc: true
+  },
+  pagerConfig: {
+    pageSize: 100,
+    pageSizes: [3, 20, 100, 500, 1000, 5000, 10000, 50000, 100000]
+  },
+  scrollX: {
+    gt: 0,
+    enabled: true
+  },
+  scrollY: {
+    gt: 0,
+    enabled: true
+  },
+  columns: [
+    { field: 'seq', type: 'seq', width: 80 },
+    { field: 'checkbox', type: 'checkbox', width: 80 },
+    { field: 'avatarUrl', title: '头像', width: 80, cellRender: avatarUrlCellRender },
+    { field: 'name', title: '名字', minWidth: 200, dragSort: true },
+    {
+      title: '基本信息',
+      field: 'info',
+      children: [
+        { field: 'city', title: '所在地', width: 140, formatter: formatCity },
+        { field: 'age', title: '年龄', width: 120 },
+        { field: 'sex', title: '性别', width: 120, formatter: formatSex },
+        { field: 'email', title: '邮箱', width: 220, slots: { default: 'emailDefault' } },
+        // 岗位
+        {
+          field: 'job',
+          title: '岗位',
+          width: 160,
+          slots: {
+            default: 'job'
+          }
+        }
+      ]
+    },
+    { field: 'flag', title: '是否启用', width: 120, cellRender: flag1CellRender },
+    { field: 'levelNum', title: '评分', width: 160, cellRender: levelNumCellRender },
+    {
+      title: '年度账单',
+      field: 'annualStatement',
+      children: [
+        { field: 'annualStatement.m1', title: '一月', width: 140, formatter: formatAmount },
+        { field: 'annualStatement.m2', title: '二月', width: 140, formatter: formatAmount },
+        { field: 'annualStatement.m3', title: '三月', width: 140, formatter: formatAmount },
+        { field: 'annualStatement.m4', title: '四月', width: 140, formatter: formatAmount },
+        { field: 'annualStatement.m5', title: '五月', width: 140, formatter: formatAmount },
+        { field: 'annualStatement.m6', title: '六月', width: 140, formatter: formatAmount },
+        { field: 'annualStatement.m7', title: '七月', width: 140, formatter: formatAmount },
+        { field: 'annualStatement.m8', title: '八月', width: 140, formatter: formatAmount },
+        { field: 'annualStatement.m9', title: '九月', width: 140, formatter: formatAmount },
+        { field: 'annualStatement.m10', title: '十月', width: 140, formatter: formatAmount },
+        { field: 'annualStatement.m11', title: '十一月', width: 140, formatter: formatAmount },
+        { field: 'annualStatement.m12', title: '十二月', width: 140, formatter: formatAmount }
+      ]
+    }
+  ],
+  proxyConfig: {
+    form: true,
+    response: {
+      result: 'data',
+      total: 'total'
+    },
+    ajax: {
+      query ({ page }) {
+        return loadMockData(page.pageSize)
       }
-      for (let j = 0; j < Math.min(100, colList.length); j++) {
-        item[`col${j}`] = `值_${i}_${j}`
+    }
+  },
+  footerData: [
+    countRow,
+    meanRow
+  ]
+})
+const gridEvents = {
+  pageChange ({ pageSize }) {
+    gridOptions.pagerConfig.pageSize = pageSize
+  },
+  proxyQuery () {
+    updateFooterCount()
+  }
+}
+const arList = XEUtils.shuffle(XEUtils.range(1, 21).map(num => `https://vxeui.com/resource/avatarImg/avatar${num}.jpeg`))
+const neList = XEUtils.shuffle(['张三', '李四', '王五', '小徐', '老张', '老六', '小明', '老徐', '小张', '小赵', '老高', '老铁', '赵高', '小王', '老王'])
+const cyList = XEUtils.shuffle(['sz', 'gz', 'bj', 'sh', 'hz'])
+const sxList = XEUtils.shuffle(XEUtils.range(1, 60).map(num => `${num % 2}`))
+const aeList = XEUtils.shuffle(XEUtils.range(18, 66))
+const elList = XEUtils.range(1, 60).map(num => `${XEUtils.sample('qwertyuiopasdfghjklzxcvbnm'.split(''), XEUtils.random(6, 16)).join('')}@163.com`)
+const lnList = XEUtils.shuffle(XEUtils.range(0, 5))
+const asmMpas = {
+  m1: XEUtils.shuffle(XEUtils.range(1000, 1500)),
+  m2: XEUtils.shuffle(XEUtils.range(1100, 1400)),
+  m3: XEUtils.shuffle(XEUtils.range(800, 1200)),
+  m4: XEUtils.shuffle(XEUtils.range(3000, 3600)),
+  m5: XEUtils.shuffle(XEUtils.range(2000, 2100)),
+  m6: XEUtils.shuffle(XEUtils.range(1600, 1700)),
+  m7: XEUtils.shuffle(XEUtils.range(1200, 1300)),
+  m8: XEUtils.shuffle(XEUtils.range(1100, 1200)),
+  m9: XEUtils.shuffle(XEUtils.range(1700, 1800)),
+  m10: XEUtils.shuffle(XEUtils.range(1300, 1700)),
+  m11: XEUtils.shuffle(XEUtils.range(1000, 1300)),
+  m12: XEUtils.shuffle(XEUtils.range(800, 1200))
+}
+const fgList = XEUtils.shuffle(XEUtils.range(1, 60).map(num => (num % 2) === 0))
+const cacheList = []
+const loadMockData = (rSize) => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      for (let i = cacheList.length; i < rSize; i++) {
+        const item = {
+          id: 1000000 + i,
+          name: neList[i % neList.length],
+          nickname: '',
+          sex: sxList[i % sxList.length],
+          age: aeList[i % aeList.length],
+          email: elList[i % elList.length],
+          city: cyList[i % cyList.length],
+          job: XEUtils.sample(['开发', '测试', '产品', '设计', '运维', '市场', '销售', '客服']),
+          avatarUrl: arList[i % arList.length],
+          levelNum: lnList[i % lnList.length],
+          annualStatement: {
+            m1: asmMpas.m1[i % asmMpas.m1.length],
+            m2: asmMpas.m2[i % asmMpas.m2.length],
+            m3: asmMpas.m3[i % asmMpas.m3.length],
+            m4: asmMpas.m4[i % asmMpas.m4.length],
+            m5: asmMpas.m5[i % asmMpas.m5.length],
+            m6: asmMpas.m6[i % asmMpas.m6.length],
+            m7: asmMpas.m7[i % asmMpas.m7.length],
+            m8: asmMpas.m8[i % asmMpas.m8.length],
+            m9: asmMpas.m9[i % asmMpas.m9.length],
+            m10: asmMpas.m10[i % asmMpas.m10.length],
+            m11: asmMpas.m11[i % asmMpas.m11.length],
+            m12: asmMpas.m12[i % asmMpas.m12.length]
+          },
+          flag: fgList[i % fgList.length]
+        }
+        cacheList.push(item)
       }
-      dataList.push(item)
-    }
-    if ($grid) {
-      const startTime = Date.now()
-      $grid.loadColumn(colList).then(() => {
-        return $grid.loadData(dataList)
-      }).then(() => {
-        VxeUI.modal.message({
-          content: `加载时间 ${Date.now() - startTime} 毫秒`,
-          status: 'success'
-        })
-        gridOptions.loading = false
+      const data = cacheList.slice(0, rSize)
+      resolve({
+        data,
+        total: data.length
       })
-    }
-  }, 50)
+    }, 150)
+  })
+}
+const changeRowSizeEvent = async () => {
+  const $grid = gridRef.value
+  if ($grid) {
+    await nextTick()
+    await $grid.commitProxy('reload')
+  }
+}
+const updateFooterCount = () => {
+  const $grid = gridRef.value
+  if ($grid) {
+    const tableData = $grid.getFullData()
+    let countM1 = 0
+    let countM2 = 0
+    let countM3 = 0
+    let countM4 = 0
+    let countM5 = 0
+    let countM6 = 0
+    let countM7 = 0
+    let countM8 = 0
+    let countM9 = 0
+    let countM10 = 0
+    let countM11 = 0
+    let countM12 = 0
+    let countLN = 0
+    tableData.forEach(row => {
+      countM1 += XEUtils.toNumber(row.annualStatement.m1)
+      countM2 += XEUtils.toNumber(row.annualStatement.m2)
+      countM3 += XEUtils.toNumber(row.annualStatement.m3)
+      countM4 += XEUtils.toNumber(row.annualStatement.m4)
+      countM5 += XEUtils.toNumber(row.annualStatement.m5)
+      countM6 += XEUtils.toNumber(row.annualStatement.m6)
+      countM7 += XEUtils.toNumber(row.annualStatement.m7)
+      countM8 += XEUtils.toNumber(row.annualStatement.m8)
+      countM9 += XEUtils.toNumber(row.annualStatement.m9)
+      countM10 += XEUtils.toNumber(row.annualStatement.m10)
+      countM11 += XEUtils.toNumber(row.annualStatement.m11)
+      countM12 += XEUtils.toNumber(row.annualStatement.m12)
+      countLN += XEUtils.toNumber(row.levelNum)
+    })
+    countRow.name = tableData.length
+    countRow.annualStatement.m1 = countM1
+    countRow.annualStatement.m2 = countM2
+    countRow.annualStatement.m3 = countM3
+    countRow.annualStatement.m4 = countM4
+    countRow.annualStatement.m5 = countM5
+    countRow.annualStatement.m6 = countM6
+    countRow.annualStatement.m7 = countM7
+    countRow.annualStatement.m8 = countM8
+    countRow.annualStatement.m9 = countM9
+    countRow.annualStatement.m10 = countM10
+    countRow.annualStatement.m11 = countM11
+    countRow.annualStatement.m12 = countM12
+    meanRow.name = 12
+    meanRow.annualStatement.m1 = XEUtils.round(countM1 / tableData.length, 2)
+    meanRow.annualStatement.m1 = XEUtils.round(countM1 / tableData.length, 2)
+    meanRow.annualStatement.m2 = XEUtils.round(countM2 / tableData.length, 2)
+    meanRow.annualStatement.m3 = XEUtils.round(countM3 / tableData.length, 2)
+    meanRow.annualStatement.m4 = XEUtils.round(countM4 / tableData.length, 2)
+    meanRow.annualStatement.m5 = XEUtils.round(countM5 / tableData.length, 2)
+    meanRow.annualStatement.m6 = XEUtils.round(countM6 / tableData.length, 2)
+    meanRow.annualStatement.m7 = XEUtils.round(countM7 / tableData.length, 2)
+    meanRow.annualStatement.m8 = XEUtils.round(countM8 / tableData.length, 2)
+    meanRow.annualStatement.m9 = XEUtils.round(countM9 / tableData.length, 2)
+    meanRow.annualStatement.m10 = XEUtils.round(countM10 / tableData.length, 2)
+    meanRow.annualStatement.m11 = XEUtils.round(countM11 / tableData.length, 2)
+    meanRow.annualStatement.m12 = XEUtils.round(countM12 / tableData.length, 2)
+  }
 }
 
-onMounted(() => {
-  loadDataAndColumns(50, 50)
-})
+// 字体颜色
+const headerColor = ref('#000000')
+const bodyColor = ref('#111827')
+const footerColor = ref('#ff0707')
+
 </script>
+<style lang="scss" scoped>
+.demo-page-wrapper {
+  --vxe-ui-font-size-default: 18px;
+  --vxe-ui-font-size-medium: 16px;
+  --vxe-ui-font-size-small: 14px;
+  --vxe-ui-font-size-mini: 12px;
+  /// 字体颜色
+  --vxe-ui-font-color: v-bind(bodyColor);
+  --vxe-ui-table-header-font-color: v-bind(headerColor);
+  --vxe-ui-table-footer-font-color:v-bind(footerColor);
+  /// 单元格高度
+  --vxe-ui-table-row-height-default: 34px;
+  --vxe-ui-table-row-height-medium: 40px;
+  --vxe-ui-table-row-height-small: 34px;
+  --vxe-ui-table-row-height-mini: 28px;
+}
+</style>

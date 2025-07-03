@@ -1,23 +1,73 @@
 <template>
   <div>
     <vxe-select v-model="rowSize" :options="dataOptions" @change="loadData()"></vxe-select>
-    <vxe-grid v-bind="gridOptions">
-      <template #status="{ row }">
-        <vxe-tag v-if="row.status === '2'" status="error">驳回</vxe-tag>
-        <vxe-tag v-else-if="row.status === '1'" status="primary">待处理</vxe-tag>
-        <vxe-tag v-else status="success">已完成</vxe-tag>
-      </template>
+    <span>单元格高度：</span>
+    <vxe-radio-group v-model="gridOptions.size">
+      <vxe-radio-button label="" content="默认"></vxe-radio-button>
+      <vxe-radio-button label="medium" content="中"></vxe-radio-button>
+      <vxe-radio-button label="small" content="小"></vxe-radio-button>
+      <vxe-radio-button label="mini" content="迷你"></vxe-radio-button>
+    </vxe-radio-group>
+    <div style="height: calc(100vh - 80px)">
+      <vxe-grid v-bind="gridOptions" class="demo-page-wrapper">
+        <template #status="{ row }">
+          <vxe-tag v-if="row.status === '2'" status="error">驳回</vxe-tag>
+          <vxe-tag v-else-if="row.status === '1'" status="primary">待处理</vxe-tag>
+          <vxe-tag v-else status="success">已完成</vxe-tag>
+        </template>
 
-      <template #action>
-        <vxe-button mode="text" status="primary">编辑</vxe-button>
-        <vxe-button mode="text" status="error">删除</vxe-button>
-      </template>
-    </vxe-grid>
+        <template #action>
+          <vxe-button mode="text" status="primary">编辑</vxe-button>
+          <vxe-button mode="text" status="error">删除</vxe-button>
+        </template>
+
+        <template #col3="{ row }">
+          <vxe-tag status="primary"> {{ row.col3 }}</vxe-tag>
+        </template>
+        <template #col4="{ row }">
+          <vxe-tag status="success"> {{ row.col4 }}</vxe-tag>
+        </template>
+        <template #col5="{ row }">
+          <vxe-tag status="primary"> {{ row.col5 }}</vxe-tag>
+        </template>
+        <template #col6="{ row }">
+          <vxe-tag status="success"> {{ row.col6 }}</vxe-tag>
+        </template>
+        <template #col7="{ row }">
+          <vxe-tag status="primary"> {{ row.col7 }}</vxe-tag>
+        </template>
+        <template #col8="{ row }">
+          <vxe-tag status="success"> {{ row.col8 }}</vxe-tag>
+        </template>
+        <template #col9="{ row }">
+          <vxe-tag status="success"> {{ row.col9 }}</vxe-tag>
+        </template>
+        <template #col10="{ row }">
+          <vxe-tag status="primary"> {{ row.col10 }}</vxe-tag>
+        </template>
+        <template #col11="{ row }">
+          <vxe-tag status="primary"> {{ row.col11 }}</vxe-tag>
+        </template>
+        <template #col12="{ row }">
+          <vxe-tag status="success"> {{ row.col12 }}</vxe-tag>
+        </template>
+        <template #col13="{ row }">
+          <vxe-tag status="primary"> {{ row.col13 }}</vxe-tag>
+        </template>
+        <template #col14="{ row }">
+          <vxe-tag status="success"> {{ row.col14 }}</vxe-tag>
+        </template>
+        <template #col15="{ row }">
+          <vxe-tag status="primary"> {{ row.col15 }}</vxe-tag>
+        </template>
+      </vxe-grid>
+    </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { ref, reactive, nextTick } from 'vue'
+import XEUtils from 'xe-utils'
 import { VxeUI } from '../../../packages'
 import { VxeGridProps, VxeColumnPropTypes } from '../../../types'
 
@@ -69,7 +119,8 @@ const gridOptions = reactive<VxeGridProps<RowVO>>({
   border: true,
   loading: false,
   showFooter: true,
-  height: 800,
+  showOverflow: true,
+  height: '100%',
   columnConfig: {
     resizable: true
   },
@@ -79,6 +130,8 @@ const gridOptions = reactive<VxeGridProps<RowVO>>({
   },
   virtualYConfig: {
     enabled: true,
+    immediate: false,
+    oSize: 2,
     gt: 0
   },
   columns: [
@@ -86,19 +139,19 @@ const gridOptions = reactive<VxeGridProps<RowVO>>({
     { title: '列0', field: 'col0', width: 100, fixed: 'left' },
     { title: '列1', field: 'imgUrl', width: 80, fixed: 'left', cellRender: imgUrlCellRender },
     { title: '状态', field: 'status', width: 90, slots: { default: 'status' } },
-    { title: '列3', field: 'col3', width: 200 },
-    { title: '列4', field: 'col4', width: 140 },
-    { title: '列5', field: 'col5', width: 300 },
-    { title: '列6', field: 'col6', width: 160 },
-    { title: '列7', field: 'col7', width: 120 },
-    { title: '列8', field: 'col8', width: 400 },
-    { title: '列9', field: 'col9', width: 160 },
-    { title: '列10', field: 'col10', width: 160 },
-    { title: '列11', field: 'col11', width: 180 },
-    { title: '列12', field: 'col12', width: 160 },
-    { title: '列13', field: 'col13', width: 80 },
-    { title: '列14', field: 'col14', width: 120 },
-    { title: '列15', field: 'col15', width: 360 },
+    { title: '列3', field: 'col3', width: 200, slots: { default: 'col3' } },
+    { title: '列4', field: 'col4', width: 140, slots: { default: 'col4' } },
+    { title: '列5', field: 'col5', width: 300, slots: { default: 'col5' } },
+    { title: '列6', field: 'col6', width: 160, slots: { default: 'col6' } },
+    { title: '列7', field: 'col7', width: 120, slots: { default: 'col7' } },
+    { title: '列8', field: 'col8', width: 400, slots: { default: 'col8' } },
+    { title: '列9', field: 'col9', width: 160, slots: { default: 'col9' } },
+    { title: '列10', field: 'col10', width: 160, slots: { default: 'col10' } },
+    { title: '列11', field: 'col11', width: 180, slots: { default: 'col11' } },
+    { title: '列12', field: 'col12', width: 160, slots: { default: 'col12' } },
+    { title: '列13', field: 'col13', width: 80, slots: { default: 'col13' } },
+    { title: '列14', field: 'col14', width: 120, slots: { default: 'col14' } },
+    { title: '列15', field: 'col15', width: 360, slots: { default: 'col15' } },
     { title: '列16', field: 'col16', width: 150 },
     { title: '列17', field: 'col17', width: 380 },
     { title: '列18', field: 'col18', width: 100 },
@@ -213,8 +266,11 @@ const loadData = () => {
         flag1: i % 5 === 0
       }
       for (let j = 0; j < 100; j++) {
-        if (i % 9 === 0) {
-          item[`col${j}`] = `值_${i}_${j} 内容9内容9 内容9内容9内容9 内容9内容9内容9内容9 内容9内容9内容9内容9 内容9内容9内容9 内容9内容9`
+        // 针对列3至列15，赋予更适配的内容
+        if (j >= 3 && j <= 15) {
+          item[`col${j}`] = XEUtils.sample(['开发', '测试', '产品', '设计', '运维', '市场', '销售', '客服'])
+        } else if (i % 9 === 0) {
+          item[`col${j}`] = `值_${i}_${j} 内容9内容9 内容9内容9内容9 内容9内容9内容9内容9 内容9内容9内容9内容9 内容9内容9内容9 内容9内容9内容9 内容9内容9内容9 内容9内容9`
         } else if (i % 8 === 0) {
           item[`col${j}`] = `值_${i}_${j} 内容8内容8内容8内容8`
         } else if (i % 7 === 0) {
@@ -246,3 +302,12 @@ const loadData = () => {
 
 loadData()
 </script>
+<style lang="scss" scoped>
+.demo-page-wrapper {
+  /// 单元格高度
+  --vxe-ui-table-row-height-default: 48px;
+  --vxe-ui-table-row-height-medium: 40px;
+  --vxe-ui-table-row-height-small: 34px;
+  --vxe-ui-table-row-height-mini: 28px;
+}
+</style>
