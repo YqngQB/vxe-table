@@ -50,3 +50,6 @@ export * from 'vxe-pc-ui/types/components/button-group'
 export * from 'vxe-pc-ui/types/components/input'
 export * from 'vxe-pc-ui/types/components/pulldown'
 export * from 'vxe-pc-ui/types/components/tooltip'
+
+// 导出自定义扩展的 Props，这些类型在 vxe-table 原始库中不存在
+export * from './custom-props'

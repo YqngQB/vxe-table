@@ -138,7 +138,7 @@ VxeUI.setConfig({
       showIcon: true,
       allowClear: true,
       allowBtn: true,
-      iconLayout: 'vertical'
+      iconLayout: 'horizontal'
     },
     filterConfig: {
       // remote: false,

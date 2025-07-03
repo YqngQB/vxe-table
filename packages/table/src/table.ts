@@ -11806,10 +11806,12 @@ export default defineVxeComponent({
     })
 
     const refTableMainElem = ref<HTMLDivElement>()
-    const { enable } = useTableMouseScroll($xeTable, refTableMainElem, { requireKey: 'Shift' })
+    const { enable } = useTableMouseScroll($xeTable, props.mouseScrollConfig.config)
 
     onMounted(() => {
-      // enable()
+      if (props.mouseScrollConfig.enabled) {
+        enable()
+      }
       const columnOpts = computeColumnOpts.value
       const rowOpts = computeRowOpts.value
       const customOpts = computeCustomOpts.value

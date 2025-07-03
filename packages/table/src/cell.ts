@@ -1032,7 +1032,13 @@ export const Cell = {
   renderSortAndFilterHeader (params: VxeTableDefines.CellRenderHeaderParams & { $table: VxeTableConstructor & VxeTablePrivateMethods }) {
     return renderHeaderCellBaseVNs(
       params,
-      Cell.renderHeaderTitle(params).concat(Cell.renderSortIcon(params).concat(Cell.renderFilterIcon(params)))
+      [
+        h('div', { class: 'vxe-header-title-sort-wrap' }, [
+          ...Cell.renderHeaderTitle(params),
+          ...Cell.renderSortIcon(params)
+        ]),
+        ...Cell.renderFilterIcon(params)
+      ]
     )
   },
 
@@ -1042,7 +1048,12 @@ export const Cell = {
   renderSortHeader (params: VxeTableDefines.CellRenderHeaderParams & { $table: VxeTableConstructor & VxeTablePrivateMethods }) {
     return renderHeaderCellBaseVNs(
       params,
-      Cell.renderHeaderTitle(params).concat(Cell.renderSortIcon(params))
+      [
+        h('div', { class: 'vxe-header-title-sort-wrap' }, [
+          ...Cell.renderHeaderTitle(params),
+          ...Cell.renderSortIcon(params)
+        ])
+      ]
     )
   },
   renderSortIcon (params: (VxeTableDefines.CellRenderHeaderParams | VxeTableDefines.CellRenderHeaderParams) & { $table: VxeTableConstructor & VxeTablePrivateMethods }) {
@@ -1055,45 +1066,65 @@ export const Cell = {
       // 根据 sortTime 获取排序列索引
       const sortList = $table.getSortColumns()
       const sortIndex = sortList.findIndex((col) => col.field === column.field)
-      const renderSortIndex = () => {
-        if (column.sortTime && multiple && chronological && !!order) {
-          return h('span', {
-            class: 'vxe-cell--sort-index'
-          }, sortIndex > -1 ? `${sortIndex + 1}` : '')
-        } else {
-          return renderEmptyElement($table)
-        }
+      // 只显示一个图标逻辑
+      let iconVNode = null
+      if (order === 'asc') {
+        iconVNode = h('i', {
+          class: ['vxe-sort--asc-btn', iconAsc || getIcon().TABLE_SORT_ASC, {
+            'sort--active': true
+          }],
+          title: XEUtils.eqNull(ascTitle) ? getI18n('vxe.table.sortAsc') : `${ascTitle || ''}`,
+          onClick: allowBtn
+            ? (evnt: Event) => {
+                evnt.stopPropagation()
+                $table.triggerSortEvent(evnt, column, 'asc')
+              }
+            : undefined
+        })
+      } else if (order === 'desc') {
+        iconVNode = h('i', {
+          class: ['vxe-sort--desc-btn', iconDesc || getIcon().TABLE_SORT_DESC, {
+            'sort--active': true
+          }],
+          title: XEUtils.eqNull(descTitle) ? getI18n('vxe.table.sortDesc') : `${descTitle || ''}`,
+          onClick: allowBtn
+            ? (evnt: Event) => {
+                evnt.stopPropagation()
+                $table.triggerSortEvent(evnt, column, 'desc')
+              }
+            : undefined
+        })
+      } else {
+        // 默认只显示一个（优先升序）
+        iconVNode = h('i', {
+          class: ['vxe-sort--asc-btn', iconAsc || getIcon().TABLE_SORT_ASC],
+          title: XEUtils.eqNull(ascTitle) ? getI18n('vxe.table.sortAsc') : `${ascTitle || ''}`,
+          onClick: allowBtn
+            ? (evnt: Event) => {
+                evnt.stopPropagation()
+                $table.triggerSortEvent(evnt, column, 'asc')
+              }
+            : undefined
+        })
       }
+
+      // 排序索引
+      const indexNode = (column.sortTime && multiple && chronological && !!order)
+        ? h('span', {
+          class: 'vxe-cell--sort-index',
+          style: { marginLeft: '4px' }
+        }, sortIndex > -1 ? `${sortIndex + 1}` : '')
+        : null
+
+      // sort-index 与图标并排
       return [
         h('span', {
-          class: ['vxe-cell--sort', `vxe-cell--sort-${iconLayout}-layout`]
+          class: ['custom-cell--sort', 'vxe-cell--sort', `vxe-cell--sort-${iconLayout}-layout`],
+          style: { display: 'inline-flex', alignItems: 'center' }
         }, [
-          h('i', {
-            class: ['vxe-sort--asc-btn', iconAsc || getIcon().TABLE_SORT_ASC, {
-              'sort--active': order === 'asc'
-            }],
-            title: XEUtils.eqNull(ascTitle) ? getI18n('vxe.table.sortAsc') : `${ascTitle || ''}`,
-            onClick: allowBtn
-              ? (evnt: Event) => {
-                  evnt.stopPropagation()
-                  $table.triggerSortEvent(evnt, column, 'asc')
-                }
-              : undefined
-          }),
-          h('i', {
-            class: ['vxe-sort--desc-btn', iconDesc || getIcon().TABLE_SORT_DESC, {
-              'sort--active': order === 'desc'
-            }],
-            title: XEUtils.eqNull(descTitle) ? getI18n('vxe.table.sortDesc') : `${descTitle || ''}`,
-            onClick: allowBtn
-              ? (evnt: Event) => {
-                  evnt.stopPropagation()
-                  $table.triggerSortEvent(evnt, column, 'desc')
-                }
-              : undefined
-          })
-        ]),
-        renderSortIndex()
+          iconVNode,
+          indexNode
+        ].filter(Boolean))
       ]
     }
     return []

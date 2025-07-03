@@ -2,6 +2,7 @@ import { PropType } from 'vue'
 import { VxeUI } from '../../ui'
 
 import type { VxeTablePropTypes } from '../../../types'
+import type { MouseScrollConfig } from '../../../types/custom-props'
 
 const { getConfig } = VxeUI
 
@@ -298,6 +299,17 @@ export default {
   delayHover: {
     type: Number as PropType<VxeTablePropTypes.DelayHover>,
     default: () => getConfig().table.delayHover as number
+  },
+  // 【自定义扩展】 让表格可以根据鼠标在表格区域的位置自动滚动内容，通常需要按住某个键（比如 Shift）时才生效
+  mouseScrollConfig: {
+    type: Object as PropType<MouseScrollConfig>,
+    default: () => ({
+      enabled: true,
+      config: {
+        requireKey: 'Shift',
+        edgeSensitivity: 20
+      }
+    })
   },
   // 额外的参数
   params: Object as PropType<VxeTablePropTypes.Params>
