@@ -78,6 +78,11 @@ VxeUI.setConfig({
       theme: 'beautify'
     },
     columnConfig: {
+      autoOptions: {
+        isCalcHeader: true,
+        isCalcBody: true,
+        isCalcFooter: true
+      },
       maxFixedSize: 4
     },
     cellConfig: {
