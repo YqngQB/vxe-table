@@ -33,7 +33,10 @@ const navList = ref([
   { name: '主题切换', routerLink: { name: 'TableTest8' } },
   // { name: 'TableTest9', routerLink: { name: 'TableTest9' } },
   { name: '复杂渲染1', routerLink: { name: 'TableTest10' } },
-  { name: '复杂渲染2', routerLink: { name: 'GridTest' } }
+  { name: '复杂渲染2', routerLink: { name: 'GridTest0' } },
+  { name: 'GridTest1', routerLink: { name: 'GridTest1' } },
+  { name: 'GridTest2', routerLink: { name: 'GridTest2' } },
+  { name: 'GridTest3', routerLink: { name: 'GridTest3' } }
   // { name: 'TestKeepTest1', routerLink: { name: 'TestKeepTest1' } },
   // { name: 'TestKeepTest2', routerLink: { name: 'TestKeepTest2' } },
   // { name: 'TestKeepTest3', routerLink: { name: 'TestKeepTest3' } }
@@ -74,4 +77,8 @@ const changeLang = (lang: 'zh-CN' | 'en-US') => {
   padding: 16px;
   overflow: auto;
 }
+</style>
+<style>
+/* 在 .vue 文件或全局样式中添加 */
+
 </style>

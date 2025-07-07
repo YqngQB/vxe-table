@@ -1,0 +1,62 @@
+.custom-cell--sort.vxe-cell--sort-horizontal-layout {
+  position: absolute;
+  left: 4px;
+  bottom: -1px;
+  margin-top: 2px;
+}
+.vxe-cell--sort-index {
+  position: absolute;
+  left: 14px;
+  font-size: 12px;
+  top: -3px;
+}
+
+// 自定义 seq 列 提示框样式
+.vxe-custom-seq-tooltip-wrapper {
+  display: none;
+  position: absolute;
+  background: #fff;
+  border-radius: 4px;
+  padding: 8px 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transition: opacity 0.2s;
+  z-index: 9999;
+  &:not(.is--enterable) {
+    pointer-events: none;
+  }
+  &.is--visible {
+    display: block;
+  }
+  &.is--arrow {
+    .vxe-tooltip--arrow {
+      display: block;
+    }
+  }
+  &.is--enterable {
+    &:after {
+      content: "";
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      background-color: transparent;
+    }
+  }
+}
+.vxe-custom-seq-tooltip-content {
+  font-size: 14px;
+  line-height: 1.5;
+  position: relative;
+  z-index: 9;
+  background: #fff;
+}
+.vxe-custom-seq-tooltip-arrow {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+  background: #fff;
+  z-index: -1;
+}

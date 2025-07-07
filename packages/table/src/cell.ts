@@ -1032,13 +1032,7 @@ export const Cell = {
   renderSortAndFilterHeader (params: VxeTableDefines.CellRenderHeaderParams & { $table: VxeTableConstructor & VxeTablePrivateMethods }) {
     return renderHeaderCellBaseVNs(
       params,
-      [
-        h('div', { class: 'vxe-header-title-sort-wrap' }, [
-          ...Cell.renderHeaderTitle(params),
-          ...Cell.renderSortIcon(params)
-        ]),
-        ...Cell.renderFilterIcon(params)
-      ]
+      Cell.renderHeaderTitle(params).concat(Cell.renderSortIcon(params).concat(Cell.renderFilterIcon(params)))
     )
   },
 
@@ -1048,12 +1042,7 @@ export const Cell = {
   renderSortHeader (params: VxeTableDefines.CellRenderHeaderParams & { $table: VxeTableConstructor & VxeTablePrivateMethods }) {
     return renderHeaderCellBaseVNs(
       params,
-      [
-        h('div', { class: 'vxe-header-title-sort-wrap' }, [
-          ...Cell.renderHeaderTitle(params),
-          ...Cell.renderSortIcon(params)
-        ])
-      ]
+      Cell.renderHeaderTitle(params).concat(Cell.renderSortIcon(params))
     )
   },
   renderSortIcon (params: (VxeTableDefines.CellRenderHeaderParams | VxeTableDefines.CellRenderHeaderParams) & { $table: VxeTableConstructor & VxeTablePrivateMethods }) {
@@ -1120,7 +1109,7 @@ export const Cell = {
       return [
         h('span', {
           class: ['custom-cell--sort', 'vxe-cell--sort', `vxe-cell--sort-${iconLayout}-layout`],
-          style: { display: 'inline-flex', alignItems: 'center' }
+          style: { position: 'absolute' }
         }, [
           iconVNode,
           indexNode

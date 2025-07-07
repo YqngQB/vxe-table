@@ -19,6 +19,8 @@ import TableFilterPanelComponent from '../module/filter/panel'
 import TableImportPanelComponent from '../module/export/import-panel'
 import TableExportPanelComponent from '../module/export/export-panel'
 import TableMenuPanelComponent from '../module/menu/panel'
+// 自定义组件
+import VxeCustomSeqTooltip from './custom-seq-tooltip'
 
 import type { VxeLoadingComponent, VxeTooltipInstance, VxeTooltipComponent, VxeTabsConstructor, VxeTabsPrivateMethods, ValueOf, VxeComponentSlotType } from 'vxe-pc-ui'
 import type { VxeGridConstructor, VxeGridPrivateMethods, VxeTableConstructor, TableReactData, TableInternalData, VxeTablePropTypes, VxeToolbarConstructor, TablePrivateMethods, VxeTablePrivateRef, VxeTablePrivateComputed, VxeTablePrivateMethods, TableMethods, VxeTableMethods, VxeTableDefines, VxeTableEmits, VxeTableProps, VxeColumnPropTypes, VxeTableCustomPanelConstructor } from '../../../types'
@@ -424,6 +426,8 @@ export default defineVxeComponent({
     const refVarElem = ref() as Ref<HTMLDivElement>
     const refTooltip = ref() as Ref<VxeTooltipInstance>
     const refCommTooltip = ref() as Ref<VxeTooltipInstance>
+    // 自定义扩展,对外不暴露
+    const refSeqTooltip = ref() as Ref<VxeTooltipInstance>
     const refValidTooltip = ref() as Ref<VxeTooltipInstance>
     const refTableMenu = ref() as Ref<any>
     const refTableFilter = ref() as Ref<any>
@@ -7088,6 +7092,12 @@ export default defineVxeComponent({
      */
     const handleGlobalMousewheelEvent = () => {
       tableMethods.closeTooltip()
+      const $seqTooltip = refSeqTooltip.value
+      if ($seqTooltip.isActived()) {
+        requestAnimationFrame(() => {
+          $seqTooltip.close()
+        })
+      }
       if ($xeTable.closeMenu) {
         $xeTable.closeMenu()
       }
@@ -7492,13 +7502,16 @@ export default defineVxeComponent({
 
     const handleTargetEnterEvent = (isClear: boolean) => {
       const $tooltip = refTooltip.value
+      const $seqTooltip = refSeqTooltip.value
       clearTimeout(internalData.tooltipTimeout)
       if (isClear) {
         tableMethods.closeTooltip()
+        $seqTooltip.close()
       } else {
         if ($tooltip && $tooltip.setActived) {
           $tooltip.setActived(true)
         }
+        $seqTooltip?.setActived(true)
       }
     }
 
@@ -7693,9 +7706,43 @@ export default defineVxeComponent({
     }
 
     /**
+     * [自定义扩展] 处理序列号 tooltip
+     * */
+    const showCustomSeqTooltip = (_event: MouseEvent, tdEl: HTMLTableCellElement, overflowElem: HTMLElement | null, tipElem: HTMLElement | null, params: any) => {
+      const tipOverEl = overflowElem || tdEl
+      if (!tipOverEl) {
+        return nextTick()
+      }
+      params.cell = tdEl
+      const { tooltipStore } = reactData
+      const { column, row } = params
+      const { field, formatMethod } = props.seqTooltipConfig
+      const text = row[field] || ''
+      const customContent = formatMethod ? formatMethod(params) : null
+      const useCustom = !!formatMethod && !XEUtils.eqNull(customContent)
+      const content = useCustom ? customContent : XEUtils.toString(text).trim()
+      if (content) {
+        Object.assign(tooltipStore, {
+          row,
+          column,
+          visible: true,
+          currOpts: {}
+        })
+        nextTick(() => {
+          const $seqTooltip = refSeqTooltip.value
+          $seqTooltip?.open(tipElem, formatText(content)).then(() => {})
+        }).then(() => {})
+      }
+      return nextTick()
+    }
+
+    /**
      * 处理显示 tooltip
      * @param {Event} evnt 事件
-     * @param {Row} row 行对象
+     * @param tdEl 当前单元格
+     * @param overflowElem 溢出元素
+     * @param tipElem tooltip 元素
+     * @param params tooltip 参数
      */
     const handleTooltip = (evnt: MouseEvent, tdEl: HTMLTableCellElement, overflowElem: HTMLElement | null, tipElem: HTMLElement | null, params: any) => {
       const tipOverEl = overflowElem || tdEl
@@ -8821,7 +8868,13 @@ export default defineVxeComponent({
           if (!tipEl) {
             tipEl = ctEl
           }
-          handleTooltip(evnt, tdEl, ovEl || ctEl, tipEl, params)
+          // 如果是 seq 列 那么触发 showCustomSeqTooltip
+          if (column.type === 'seq' && props.seqTooltipConfig?.enabled) {
+            const _tipEl = tipEl?.querySelector('.vxe-cell--seq') || tipEl?.querySelector('span') || tipEl
+            showCustomSeqTooltip(evnt, tdEl, ovEl || ctEl, _tipEl as HTMLElement, params)
+          } else {
+            handleTooltip(evnt, tdEl, ovEl || ctEl, tipEl, params)
+          }
         }
       },
       /**
@@ -8848,18 +8901,24 @@ export default defineVxeComponent({
       handleTargetLeaveEvent () {
         const tooltipOpts = computeTooltipOpts.value
         let $tooltip = refTooltip.value
+        const $seqTooltip = refSeqTooltip.value
         if ($tooltip && $tooltip.setActived) {
           $tooltip.setActived(false)
         }
+        $seqTooltip?.setActived(false)
         if (tooltipOpts.enterable) {
           internalData.tooltipTimeout = setTimeout(() => {
             $tooltip = refTooltip.value
             if ($tooltip && $tooltip.isActived && !$tooltip.isActived()) {
               $xeTable.closeTooltip()
             }
+            if ($seqTooltip && !$seqTooltip.isActived()) {
+              $seqTooltip.close()
+            }
           }, tooltipOpts.leaveDelay)
         } else {
           $xeTable.closeTooltip()
+          $seqTooltip?.close()
         }
       },
       triggerHeaderCellClickEvent (evnt, params) {
@@ -10174,6 +10233,7 @@ export default defineVxeComponent({
         const rowOpts = computeRowOpts.value
         const validTip = refValidTooltip.value
         const tooltip = refTooltip.value
+        const seqTooltip = refSeqTooltip.value
         const bodyHeight = yHandleEl.clientHeight
         const bodyWidth = xHandleEl.clientWidth
         const scrollHeight = yHandleEl.scrollHeight
@@ -10256,6 +10316,9 @@ export default defineVxeComponent({
         }
         if (tooltip && tooltip.reactData.visible) {
           tooltip.close()
+        }
+        if (seqTooltip && seqTooltip.reactData.visible) {
+          seqTooltip.close()
         }
         if (isBottomBoundary || isTopBoundary || isRightBoundary || isLeftBoundary) {
           dispatchEvent('scroll-boundary', evntParams, evnt)
@@ -11561,6 +11624,15 @@ export default defineVxeComponent({
               ref: refCommTooltip,
               isArrow: false,
               enterable: false
+            }),
+            h(VxeCustomSeqTooltip, {
+              key: 'seqTp',
+              ref: refSeqTooltip,
+              enterable: true,
+              enterDelay: tableTipConfig.enterDelay,
+              leaveDelay: tableTipConfig.leaveDelay
+            }, {
+              content: props?.seqTooltipConfig?.contentSlot ? props.seqTooltipConfig.contentSlot({ $grid: $xeGrid, tooltip: refSeqTooltip }) : undefined
             }),
             /**
               * 工具提示

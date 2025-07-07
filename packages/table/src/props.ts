@@ -1,7 +1,7 @@
 import { PropType } from 'vue'
 import { VxeUI } from '../../ui'
 
-import type { VxeTablePropTypes } from '../../../types'
+import type { SeqTooltipConfig, VxeTablePropTypes } from '../../../types'
 import type { MouseScrollConfig } from '../../../types/custom-props'
 
 const { getConfig } = VxeUI
@@ -309,6 +309,22 @@ export default {
         requireKey: 'Shift',
         edgeSensitivity: 20
       }
+    })
+  },
+  seqTooltipConfig: {
+    type: Object as PropType<SeqTooltipConfig>,
+    default: () => ({
+      enabled: false,
+      /**
+       * 需要显示的行字段
+       */
+      field: undefined,
+      // 格式化函数,如果不传
+      formatMethod: undefined,
+      /**
+       * 提示内容插槽
+       */
+      contentSlot: undefined
     })
   },
   // 额外的参数

@@ -84,8 +84,14 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/component/grid',
+    name: 'GridTest',
     component: RouteLayout,
     children: [
+      {
+        path: 'test',
+        name: 'GridTest0',
+        component: () => import('../views/grid/GridTest.vue')
+      },
       {
         path: 'test1',
         name: 'GridTest1',
