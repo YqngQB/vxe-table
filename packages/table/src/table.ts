@@ -26,6 +26,11 @@ import type { VxeLoadingComponent, VxeTooltipInstance, VxeTooltipComponent, VxeT
 import type { VxeGridConstructor, VxeGridPrivateMethods, VxeTableConstructor, TableReactData, TableInternalData, VxeTablePropTypes, VxeToolbarConstructor, TablePrivateMethods, VxeTablePrivateRef, VxeTablePrivateComputed, VxeTablePrivateMethods, TableMethods, VxeTableMethods, VxeTableDefines, VxeTableEmits, VxeTableProps, VxeColumnPropTypes, VxeTableCustomPanelConstructor } from '../../../types'
 import { useTableMouseScroll } from './mouse-scroll-binding'
 
+// 导入虚拟滚动优化补丁函数
+import {
+  optimizedCalcCellWidth, optimizedCalcColumnAutoWidth, optimizedDataUpdateHandler
+} from './virtual-scroll-optimization-patch'
+
 const { getConfig, getIcon, getI18n, renderer, formats, createEvent, globalResize, interceptor, hooks, globalEvents, GLOBAL_EVENT_KEYS, useFns, renderEmptyElement } = VxeUI
 
 const supportMaxRow = 5e6
@@ -1740,6 +1745,10 @@ export default defineVxeComponent({
     }
 
     const calcCellWidth = () => {
+      if (optimizedCalcCellWidth) {
+        optimizedCalcCellWidth($xeTable)
+        return
+      }
       const autoWidthColumnList = computeAutoWidthColumnList.value
       const { fullColumnIdData } = internalData
       const el = refElem.value
@@ -3375,6 +3384,9 @@ export default defineVxeComponent({
         errLog('vxe.error.errConflicts', ['row-config.drag', 'aggregate-config'])
         return nextTick()
       }
+      // 在数据加载完成后清除缓存
+      optimizedDataUpdateHandler($xeTable)
+
       let isRGroup = false
       if (treeConfig) {
         if (transform) {
@@ -8214,7 +8226,7 @@ export default defineVxeComponent({
           const colMinWidth = getColReMinWidth(cellParams)
 
           el.setAttribute('data-calc-col', 'Y')
-          let resizeWidth = calcColumnAutoWidth(resizeColumn, el)
+          let resizeWidth = optimizedCalcColumnAutoWidth(resizeColumn, el, $xeTable)
           el.removeAttribute('data-calc-col')
           if (colRest) {
             resizeWidth = Math.max(resizeWidth, colRest.width)
