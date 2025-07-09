@@ -10,7 +10,9 @@ import { reactive, ref } from 'vue'
 const tableRef = ref(null)
 const gridOptions = reactive({
   aggregateConfig: {
-    groupFields: ['role']
+    groupFields: ['role', 'sex'],
+    showIcon: false,
+    showTotal: true
   },
   columns: [
     { field: 'name', title: 'Name', minWidth: 300, rowGroupNode: true },

@@ -8,6 +8,12 @@
       <vxe-radio-button label="small" content="小"></vxe-radio-button>
       <vxe-radio-button label="mini" content="迷你"></vxe-radio-button>
     </vxe-radio-group>
+    <span>表头对齐方式：</span>
+    <vxe-radio-group v-model="gridOptions.headerAlign">
+      <vxe-radio-button label="left" content="左对齐"></vxe-radio-button>
+      <vxe-radio-button label="center" content="居中"></vxe-radio-button>
+      <vxe-radio-button label="right" content="右对齐"></vxe-radio-button>
+    </vxe-radio-group>
     <div style="height: calc(100vh - 80px)">
       <vxe-grid v-bind="gridOptions" class="demo-page-wrapper">
         <template #status="{ row }">

@@ -1,14 +1,16 @@
+.vxe-cell--title {
+  position: relative;
+}
 .custom-cell--sort.vxe-cell--sort-horizontal-layout {
   position: absolute;
-  left: 4px;
-  bottom: -1px;
-  margin-top: 2px;
+  left: var(--vxe-sort-left, 4px);
+  bottom: var(--vxe-sort-bottom, -4px);
 }
 .vxe-cell--sort-index {
   position: absolute;
-  left: 14px;
-  font-size: 12px;
-  top: -3px;
+  left: var(--vxe-sort-index-left, 14px);
+  font-size: var(--vxe-sort-index-font-size, 12px);
+  top: var(--vxe-sort-index-top, -3px);
 }
 
 // 自定义 seq 列 提示框样式

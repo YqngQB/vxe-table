@@ -186,7 +186,7 @@ function renderTitleContent (params: VxeTableDefines.CellRenderHeaderParams & { 
   const { computeTooltipOpts } = $table.getComputeMaps()
   const { showHeaderOverflow: allColumnHeaderOverflow } = tableProps
   const { isRowGroupStatus } = tableReactData
-  const { showHeaderOverflow } = column
+  const { showHeaderOverflow, sortable } = column
   const tooltipOpts = computeTooltipOpts.value
   const showAllTip = tooltipOpts.showAll
   const headOverflow = XEUtils.isUndefined(showHeaderOverflow) || XEUtils.isNull(showHeaderOverflow) ? allColumnHeaderOverflow : showHeaderOverflow
@@ -216,6 +216,8 @@ function renderTitleContent (params: VxeTableDefines.CellRenderHeaderParams & { 
     }
   }
   const titleVN = getRenderDefaultColumnTitle(column, content)
+  const sortIconVNs = sortable ? Cell.renderSortIcon(params) : []
+
   return [
     h('span', {
       class: 'vxe-cell--title',
@@ -223,6 +225,7 @@ function renderTitleContent (params: VxeTableDefines.CellRenderHeaderParams & { 
     }, isRowGroupStatus && column.aggFunc && $table.getPivotTableAggregateRenderColTitles
       ? $table.getPivotTableAggregateRenderColTitles(column, titleVN)
       : [
+          ...sortIconVNs,
           titleVN
         ])
   ]
@@ -1032,7 +1035,7 @@ export const Cell = {
   renderSortAndFilterHeader (params: VxeTableDefines.CellRenderHeaderParams & { $table: VxeTableConstructor & VxeTablePrivateMethods }) {
     return renderHeaderCellBaseVNs(
       params,
-      Cell.renderHeaderTitle(params).concat(Cell.renderSortIcon(params).concat(Cell.renderFilterIcon(params)))
+      Cell.renderHeaderTitle(params).concat(Cell.renderFilterIcon(params))
     )
   },
 
@@ -1042,7 +1045,7 @@ export const Cell = {
   renderSortHeader (params: VxeTableDefines.CellRenderHeaderParams & { $table: VxeTableConstructor & VxeTablePrivateMethods }) {
     return renderHeaderCellBaseVNs(
       params,
-      Cell.renderHeaderTitle(params).concat(Cell.renderSortIcon(params))
+      Cell.renderHeaderTitle(params)
     )
   },
   renderSortIcon (params: (VxeTableDefines.CellRenderHeaderParams | VxeTableDefines.CellRenderHeaderParams) & { $table: VxeTableConstructor & VxeTablePrivateMethods }) {
