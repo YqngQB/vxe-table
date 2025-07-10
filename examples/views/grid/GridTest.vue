@@ -172,7 +172,7 @@ const gridOptions = reactive<MyVxeGridProps>({
     { title: '列0', field: 'col0', width: 100, fixed: 'left' },
     { title: '列1', field: 'imgUrl', width: 80, fixed: 'left', cellRender: imgUrlCellRender },
     { title: '状态状态状态状态状态状态状态状态状态状态状态状态状态状态状态状态状态状态状态状态状态', titleSuffix: { content: '提示内容', icon: 'vxe-icon-user-fill' }, showHeaderOverflow: 'tooltip', field: 'status', width: 90, slots: { default: 'status' }, sortable: true },
-    { title: '列3', field: 'col3', width: 200, slots: { default: 'col3' }, sortable: true },
+    { title: '列3', field: 'col3', width: 'auto', slots: { default: 'col3' }, sortable: true },
     { title: '列4', field: 'col4', width: 140, slots: { default: 'col4' } },
     { title: '列5', field: 'col5', width: 300, slots: { default: 'col5' } },
     { title: '列6', field: 'col6', width: 160, slots: { default: 'col6' } },

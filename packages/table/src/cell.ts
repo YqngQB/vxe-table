@@ -1088,16 +1088,16 @@ export const Cell = {
         })
       } else {
         // 默认只显示一个（优先升序）
-        iconVNode = h('i', {
-          class: ['vxe-sort--asc-btn', iconAsc || getIcon().TABLE_SORT_ASC],
-          title: XEUtils.eqNull(ascTitle) ? getI18n('vxe.table.sortAsc') : `${ascTitle || ''}`,
-          onClick: allowBtn
-            ? (evnt: Event) => {
-                evnt.stopPropagation()
-                $table.triggerSortEvent(evnt, column, 'asc')
-              }
-            : undefined
-        })
+        // iconVNode = h('i', {
+        //   class: ['vxe-sort--asc-btn', iconAsc || getIcon().TABLE_SORT_ASC],
+        //   title: XEUtils.eqNull(ascTitle) ? getI18n('vxe.table.sortAsc') : `${ascTitle || ''}`,
+        //   onClick: allowBtn
+        //     ? (evnt: Event) => {
+        //         evnt.stopPropagation()
+        //         $table.triggerSortEvent(evnt, column, 'asc')
+        //       }
+        //     : undefined
+        // })
       }
 
       // 排序索引
