@@ -1101,7 +1101,8 @@ export const Cell = {
       }
 
       // 排序索引
-      const indexNode = (column.sortTime && multiple && chronological && !!order)
+      // 获取当前排序列数量,排序列数量大于1（sortList.length > 1）时显示 排序索引
+      const indexNode = (column.sortTime && multiple && chronological && !!order && sortList.length > 1)
         ? h('span', {
           class: 'vxe-cell--sort-index',
           style: { marginLeft: '4px' }

@@ -129,7 +129,6 @@ const gridOptions = reactive<MyVxeGridProps>({
   border: true,
   loading: false,
   showFooter: true,
-  showOverflow: true,
   height: '100%',
   columnConfig: {
     resizable: true
@@ -167,7 +166,7 @@ const gridOptions = reactive<MyVxeGridProps>({
   //   }
   // },
   columns: [
-    { field: 'seq', type: 'seq', width: 60, fixed: 'left' },
+    { field: 'seq', type: 'seq', width: 60, fixed: 'left', showOverflow: true },
     { field: 'checkbox', type: 'checkbox', width: 60, fixed: 'left' },
     { title: '列0', field: 'col0', width: 100, fixed: 'left' },
     { title: '列1', field: 'imgUrl', width: 80, fixed: 'left', cellRender: imgUrlCellRender },
